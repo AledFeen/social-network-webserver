@@ -3,14 +3,19 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens,
+        HasFactory,
+        Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -37,8 +42,21 @@ class User extends Authenticatable
      *
      * @var array<string, string>
      */
+    //'email_verified_at' => 'datetime',
     protected $casts = [
-        'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    protected function email(): Attribute{
+        return Attribute::make(
+          get: fn($value) => $value,
+          set: fn($value) => Str::lower($value)
+        );
+    }
+    protected function username(): Attribute{
+        return Attribute::make(
+            get: fn($value) => $value,
+            set: fn($value) => Str::lower($value)
+        );
+    }
 }

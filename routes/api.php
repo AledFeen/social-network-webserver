@@ -17,3 +17,11 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
+
+});
+
+Route::get('/profile', function () {
+    // Только подтвержденные пользователи могут получить доступ к этому маршруту ...
+})->middleware(['auth', 'verified']);
