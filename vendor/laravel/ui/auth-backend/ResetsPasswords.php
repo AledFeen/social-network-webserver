@@ -17,6 +17,23 @@ trait ResetsPasswords
     use RedirectsUsers;
 
     /**
+     * Display the password reset view for the given token.
+     *
+     * If no token is present, display the link request form.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function showResetForm(Request $request)
+    {
+        $token = $request->route()->parameter('token');
+
+        return view('auth.passwords.reset')->with(
+            ['token' => $token, 'email' => $request->email]
+        );
+    }
+
+    /**
      * Reset the given user's password.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -31,16 +48,16 @@ trait ResetsPasswords
         // database. Otherwise we will parse the error and return the response.
         $response = $this->broker()->reset(
             $this->credentials($request), function ($user, $password) {
-                $this->resetPassword($user, $password);
-            }
+            $this->resetPassword($user, $password);
+        }
         );
 
         // If the password was successfully reset, we will redirect the user back to
         // the application's home authenticated view. If there is an error we can
         // redirect them back to where they came from with their error message.
         return $response == Password::PASSWORD_RESET
-                    ? $this->sendResetResponse($request, $response)
-                    : $this->sendResetFailedResponse($request, $response);
+            ? $this->sendResetResponse($request, $response)
+            : $this->sendResetFailedResponse($request, $response);
     }
 
     /**
@@ -52,6 +69,7 @@ trait ResetsPasswords
     {
         return [
             'token' => 'required',
+            'email' => 'required|email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ];
     }
@@ -74,12 +92,9 @@ trait ResetsPasswords
      */
     protected function credentials(Request $request)
     {
-        return [
-            'email' => Auth::user()->email,
-            'password' => $request->input('password'),
-            'password_confirmation' => $request->input('password_confirmation'),
-            'token' => $request->input('token'),
-        ];
+        return $request->only(
+            'email', 'password', 'password_confirmation', 'token'
+        );
     }
 
     /**
@@ -92,11 +107,16 @@ trait ResetsPasswords
     protected function resetPassword($user, $password)
     {
         $this->setUserPassword($user, $password);
+
+        //$user->setRememberToken(Str::random(60));
+
         $user->save();
 
         event(new PasswordReset($user));
-        //$this->guard()->login($user);
+
         Auth::logout();
+
+        //$this->guard()->login($user);
     }
 
     /**
@@ -125,7 +145,7 @@ trait ResetsPasswords
         }
 
         return redirect($this->redirectPath())
-                            ->with('status', trans($response));
+            ->with('status', trans($response));
     }
 
     /**
@@ -144,8 +164,8 @@ trait ResetsPasswords
         }
 
         return redirect()->back()
-                    ->withInput($request->only('email'))
-                    ->withErrors(['email' => trans($response)]);
+            ->withInput($request->only('email'))
+            ->withErrors(['email' => trans($response)]);
     }
 
     /**
