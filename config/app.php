@@ -56,7 +56,6 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost:8000'),
-    'send_email_url' => env('SEND_EMAIL_URL', 'http://localhost:8000'),
 
     'asset_url' => env('ASSET_URL'),
 
