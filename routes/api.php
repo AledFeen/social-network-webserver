@@ -19,9 +19,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
+    Route::get('/privacy-settings', [\App\Http\Controllers\PrivacySettingsController::class, 'getSettings']);
     Route::put('/privacy-settings', [\App\Http\Controllers\PrivacySettingsController::class, 'updateSettings']);
-});
 
-Route::get('/profile', function () {
-    // Только подтвержденные пользователи могут получить доступ к этому маршруту ...
-})->middleware(['auth', 'verified']);
+    Route::get('/account', [\App\Http\Controllers\AccountController::class, 'getAccount']);
+    Route::get('/my-account', [\App\Http\Controllers\AccountController::class, 'getMyAccount']);
+    Route::put('/my-account', [\App\Http\Controllers\AccountController::class, 'updateAccount']);
+    Route::post('/profile-image', [\App\Http\Controllers\AccountController::class, 'updateImage']);
+    Route::delete('/profile-image', [\App\Http\Controllers\AccountController::class, 'deleteImage']);
+});
