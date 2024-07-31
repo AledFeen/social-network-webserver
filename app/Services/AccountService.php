@@ -18,7 +18,7 @@ class AccountService
         return Account::where('user_id', $request['user_id'])->first();
     }
 
-    public function update($request)
+    public function update($request): bool
     {
         $updated = Account::where('user_id', Auth::id())->update([
             'name' => $request['name'],
@@ -31,7 +31,7 @@ class AccountService
         return (bool)$updated;
     }
 
-    public function updateImage($request)
+    public function updateImage($request): bool
     {
         $oldData = $this->getMy();
         if ($oldData->image != 'default_avatar') {
@@ -44,20 +44,10 @@ class AccountService
             $imageName = $this->saveImage($request['image']);
             return $this->setImage($imageName);
         }
-    }
-
-    protected function setImage($imageName): bool
-    {
-        if ($imageName) {
-            $updated = Account::where('user_id', Auth::id())->update([
-                'image' => $imageName
-            ]);
-            return (bool)$updated;
-        }
         return false;
     }
 
-    public function deleteImage()
+    public function deleteImage(): bool
     {
         $oldData = $this->getMy();
         if ($oldData->image != 'default_avatar') {
@@ -70,6 +60,17 @@ class AccountService
                 return (bool)$updated;
             }
             return false;
+        }
+        return false;
+    }
+
+    protected function setImage($imageName): bool
+    {
+        if ($imageName) {
+            $updated = Account::where('user_id', Auth::id())->update([
+                'image' => $imageName
+            ]);
+            return (bool)$updated;
         }
         return false;
     }

@@ -60,4 +60,19 @@ class User extends Authenticatable implements MustVerifyEmail
             set: fn($value) => Str::lower($value)
         );
     }
+
+    public function followers()
+    {
+        return $this->hasMany(Subscription::class, 'user_id');
+    }
+
+    public function following()
+    {
+        return $this->hasMany(Subscription::class, 'follower_id');
+    }
+
+    public function account()
+    {
+        return $this->hasOne(Account::class);
+    }
 }

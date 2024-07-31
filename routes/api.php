@@ -27,4 +27,7 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::put('/my-account', [\App\Http\Controllers\AccountController::class, 'updateAccount']);
     Route::post('/profile-image', [\App\Http\Controllers\AccountController::class, 'updateImage']);
     Route::delete('/profile-image', [\App\Http\Controllers\AccountController::class, 'deleteImage']);
+
+    Route::get('/subscribers', [\App\Http\Controllers\SubscriptionController::class, 'getSubscribers']);
+    Route::get('/subscriptions', [\App\Http\Controllers\SubscriptionController::class, 'getSubscriptions']);
 });

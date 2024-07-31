@@ -10,4 +10,9 @@ class Account extends Model
     protected $guarded = false;
 
     use HasFactory;
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
