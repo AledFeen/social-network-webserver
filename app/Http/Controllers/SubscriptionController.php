@@ -18,14 +18,31 @@ class SubscriptionController extends Controller
         $this->service = $service;
     }
 
-    public function subscribeUser()
+    public function subscribeUser(SubscriptionRequest $request)
     {
+        $request = $request->validated();
 
+        $result = $this->service->subscribe($request);
+
+        return response()->json(['success' => $result], $result ? 200 : 400);
     }
 
-    public function unsubscribeUser()
+    public function unsubscribeUser(SubscriptionRequest $request)
     {
+        $request = $request->validated();
 
+        $result = $this->service->unsubscribe($request);
+
+        return response()->json(['success' => $result], $result ? 200 : 400);
+    }
+
+    public function deleteSubscriber(SubscriptionRequest $request)
+    {
+        $request = $request->validated();
+
+        $result = $this->service->deleteSubscriber($request);
+
+        return response()->json(['success' => $result], $result ? 200 : 400);
     }
 
     public function getSubscribers(SubscriptionRequest $request)
@@ -44,10 +61,5 @@ class SubscriptionController extends Controller
         $following = $this->service->subscriptions($request);
 
         return SubscriptionResource::collection($following);
-    }
-
-    public function deleteSubscriber()
-    {
-
     }
 }
