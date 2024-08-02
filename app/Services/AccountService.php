@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Account;
+use App\Models\Location;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -20,15 +21,18 @@ class AccountService
 
     public function update($request): bool
     {
-        $updated = Account::where('user_id', Auth::id())->update([
-            'name' => $request['name'],
-            'surname' => $request['surname'],
-            'second_name' => $request['second_name'],
-            'date_of_birth' => $request['date_of_birth'],
-            'about_me' => $request['about_me'],
-        ]);
+        $location = $this->checkLocation($request['location']);
+        if ($location) {
+            $updated = Account::where('user_id', Auth::id())->update([
+                'real_name' => $request['real_name'],
+                'location' => $request['location'],
+                'date_of_birth' => $request['date_of_birth'],
+                'about_me' => $request['about_me'],
+            ]);
 
-        return (bool)$updated;
+            return (bool)$updated;
+        }
+        return false;
     }
 
     public function updateImage($request): bool
@@ -62,6 +66,15 @@ class AccountService
             return false;
         }
         return false;
+    }
+
+    protected function checkLocation(string $location): bool
+    {
+        if (!Location::where('name', $location)->first()) {
+            Location::create(['name' => $location]);
+            return true;
+        }
+        return true;
     }
 
     protected function setImage($imageName): bool

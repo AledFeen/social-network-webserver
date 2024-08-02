@@ -17,11 +17,10 @@ class AccountResource extends JsonResource
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
-            'name' => $this->name,
-            'surname' => $this->surname,
-            'second_name' => $this->second_name,
+            'real_name' => $this->real_name,
             'date_of_birth' => $this->date_of_birth,
             'about_me' => $this->about_me,
+            'location' => $this->location,
             'image' => $this->image,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at
