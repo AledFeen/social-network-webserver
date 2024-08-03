@@ -7,7 +7,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
-class SubscriptionService
+class SubscriptionService implements MustCheckBlacklist
 {
     public function subscribe(array $request)
     {
@@ -48,7 +48,13 @@ class SubscriptionService
     {
         $user = $this->findUser($request);
 
-        $followers = $user->followers()->with('follower.account')->get()->map(function ($subscription) {
+        $blockedByIds = $this->blockedBy();
+
+        $followers = $user->followers()
+            ->whereNotIn('follower_id', $blockedByIds)
+            ->with('follower.account')
+            ->get()
+            ->map(function ($subscription) {
             return new UserDTO($subscription->follower->id, $subscription->follower->name, $subscription->follower->account->image);
         });
 
@@ -59,8 +65,14 @@ class SubscriptionService
     {
         $user = $this->findUser($request);
 
-        $following = $user->following()->with('user.account')->get()->map(function ($subscription) {
-            return new UserDTO($subscription->follower->id, $subscription->follower->name, $subscription->follower->account->image);
+        $blockedByIds = $this->blockedBy();
+
+        $following = $user->following()
+            ->whereNotIn('user_id', $blockedByIds)
+            ->with('user.account')
+            ->get()
+            ->map(function ($subscription) {
+            return new UserDTO($subscription->user->id, $subscription->user->name, $subscription->user->account->image);
         });
 
         return $following;
@@ -72,4 +84,8 @@ class SubscriptionService
         return User::find($user_id);
     }
 
+    public function blockedBy()
+    {
+        return User::where('id', Auth::id())->first()->blockedBy()->pluck('user_id');
+    }
 }
