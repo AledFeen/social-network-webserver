@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,6 +28,10 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::put('/my-account', [\App\Http\Controllers\AccountController::class, 'updateAccount']);
     Route::post('/profile-image', [\App\Http\Controllers\AccountController::class, 'updateImage']);
     Route::delete('/profile-image', [\App\Http\Controllers\AccountController::class, 'deleteImage']);
+
+    Route::get('/blocked-users', [\App\Http\Controllers\BlacklistController::class, 'getBlockedUsers']);
+    Route::post('/block-user', [\App\Http\Controllers\BlacklistController::class, 'block']);
+    Route::delete('/unblock-user', [\App\Http\Controllers\BlacklistController::class, 'unblock']);
 
     Route::get('/subscribers', [\App\Http\Controllers\SubscriptionController::class, 'getSubscribers']);
     Route::get('/subscriptions', [\App\Http\Controllers\SubscriptionController::class, 'getSubscriptions']);

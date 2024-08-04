@@ -3,11 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Subscription\SubscriptionRequest;
-use App\Http\Resources\SubscriptionResource;
-use App\Models\dto\UserDTO;
-use App\Models\User;
+use App\Http\Requests\UserDTO\UserDTOResource;
 use App\Services\SubscriptionService;
-use Illuminate\Http\Request;
 
 class SubscriptionController extends Controller
 {
@@ -51,7 +48,7 @@ class SubscriptionController extends Controller
 
         $followers = $this->service->subscribers($request);
 
-        return SubscriptionResource::collection($followers);
+        return UserDTOResource::collection($followers);
     }
 
     public function getSubscriptions(SubscriptionRequest $request)
@@ -60,6 +57,6 @@ class SubscriptionController extends Controller
 
         $following = $this->service->subscriptions($request);
 
-        return SubscriptionResource::collection($following);
+        return UserDTOResource::collection($following);
     }
 }

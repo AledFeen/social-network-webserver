@@ -5,10 +5,13 @@ namespace App\Services;
 use App\Models\dto\UserDTO;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\blacklist\CheckBlacklist;
+use App\Services\blacklist\MustCheckBlacklist;
 use Illuminate\Support\Facades\Auth;
 
 class SubscriptionService implements MustCheckBlacklist
 {
+    use CheckBlacklist;
     public function subscribe(array $request)
     {
         $user_id = $request['user_id'];
@@ -52,7 +55,7 @@ class SubscriptionService implements MustCheckBlacklist
 
         $followers = $user->followers()
             ->whereNotIn('follower_id', $blockedByIds)
-            ->with('follower.account')
+            ->with('user.account')
             ->get()
             ->map(function ($subscription) {
             return new UserDTO($subscription->follower->id, $subscription->follower->name, $subscription->follower->account->image);
@@ -82,10 +85,5 @@ class SubscriptionService implements MustCheckBlacklist
     {
         $user_id = $request['user_id'];
         return User::find($user_id);
-    }
-
-    public function blockedBy()
-    {
-        return User::where('id', Auth::id())->first()->blockedBy()->pluck('user_id');
     }
 }
