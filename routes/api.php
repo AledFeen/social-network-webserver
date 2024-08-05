@@ -39,4 +39,29 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::post('/subscribe', [\App\Http\Controllers\SubscriptionController::class, 'subscribeUser']);
     Route::delete('/unsubscribe', [\App\Http\Controllers\SubscriptionController::class, 'unsubscribeUser']);
     Route::delete('/delete-subscriber', [\App\Http\Controllers\SubscriptionController::class, 'deleteSubscriber']);
+
+    Route::group(['middleware' => ['account_type']], function () {
+        Route::get('account-type-middleware', function () {
+            return response()->json(['success' => true]);
+        });
+    });
+
+    Route::group(['middleware' => ['can_comment']], function () {
+        Route::get('can-comment-middleware', function () {
+            return response()->json(['success' => true]);
+        });
+    });
+
+    Route::group(['middleware' => ['can_repost']], function () {
+        Route::get('can-repost-middleware', function () {
+            return response()->json(['success' => true]);
+        });
+    });
+
+    Route::group(['middleware' => ['can_message']], function () {
+        Route::get('can-message-middleware', function () {
+            return response()->json(['success' => true]);
+        });
+    });
+
 });

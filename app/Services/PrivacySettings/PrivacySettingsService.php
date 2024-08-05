@@ -1,10 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\PrivacySettings;
 
-use App\Http\Resources\PrivacySettingsResource;
 use App\Models\PrivacySettings;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class PrivacySettingsService

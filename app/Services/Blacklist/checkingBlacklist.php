@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Services\blacklist;
+namespace App\Services\Blacklist;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
-trait CheckBlacklist
+trait checkingBlacklist
 {
     public function blockedBy()
     {

@@ -5,13 +5,13 @@ namespace App\Services;
 use App\Models\dto\UserDTO;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\blacklist\CheckBlacklist;
-use App\Services\blacklist\MustCheckBlacklist;
+use App\Services\Blacklist\checkingBlacklist;
+use App\Services\Blacklist\MustCheckBlacklist;
 use Illuminate\Support\Facades\Auth;
 
 class SubscriptionService implements MustCheckBlacklist
 {
-    use CheckBlacklist;
+    use checkingBlacklist;
     public function subscribe(array $request)
     {
         $user_id = $request['user_id'];

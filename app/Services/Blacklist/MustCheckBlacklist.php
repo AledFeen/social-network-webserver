@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\blacklist;
+namespace App\Services\Blacklist;
 
 interface MustCheckBlacklist
 {

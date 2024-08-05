@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PrivacySettings\UpdatePrivacySettingsRequest;
 use App\Http\Resources\PrivacySettingsResource;
-use App\Services\PrivacySettingsService;
+use App\Services\PrivacySettings\PrivacySettingsService;
 
 class PrivacySettingsController extends Controller
 {
