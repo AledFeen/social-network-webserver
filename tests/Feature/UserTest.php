@@ -1,0 +1,61 @@
+<?php
+
+
+use App\Models\PrivacySettings;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
+use Tests\TestCase;
+
+class UserTest extends TestCase
+{
+    use RefreshDatabase;
+    public function test_user_observer_created()
+    {
+        $user = User::factory()->create();
+        Auth::login($user);
+
+        $this->assertDatabaseHas('privacy_settings', ['user_id' => $user->id])
+        ->assertDatabaseHas('accounts', ['user_id' => $user->id]);
+    }
+
+    public function test_login(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'test@example.com',
+            'password' => bcrypt('password'),
+        ]);
+
+        $this->post('/login', [
+            'email' => 'test@example.com',
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_registration():void
+    {
+        $response = $this->post('/register',
+            [
+               'name' => 'test',
+               'email' => 'test@gmail.com',
+               'password' => '12344321',
+               'password_confirmation' => '12344321'
+            ]);
+
+        $response->assertStatus(302);
+
+        $this->assertDatabaseHas('users', [
+            'name' => 'test',
+            'email' => 'test@gmail.com',
+        ]);
+
+        $user = User::where('name', 'test')->first();
+
+        $this->assertAuthenticatedAs($user)
+            ->assertDatabaseHas('privacy_settings', ['user_id' => $user->id])
+            ->assertDatabaseHas('accounts', ['user_id' => $user->id]);
+    }
+
+}
