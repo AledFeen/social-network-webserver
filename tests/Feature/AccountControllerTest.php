@@ -5,17 +5,17 @@ namespace Tests\Feature;
 use App\Models\Account;
 use App\Models\Location;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AccountControllerTest extends TestCase
 {
+    use RefreshDatabase;
     public function test_get_my_account(): void
     {
         $user = User::factory()->create();
-        Auth::login($user);
 
         $response = $this->actingAs($user)->get('/api/my-account');
 
@@ -44,8 +44,6 @@ class AccountControllerTest extends TestCase
         $user = User::factory()->create();
         $user_one = User::factory()->create();
 
-        Auth::login($user);
-
         $response = $this->actingAs($user)->get("/api/account?user_id={$user_one->id}");
 
         $account = Account::where('user_id', $user_one->id)->first();
@@ -70,7 +68,6 @@ class AccountControllerTest extends TestCase
     public function test_update_account(): void
     {
         $user = User::factory()->create();
-        Auth::login($user);
 
         $location = Location::factory()->create();
 
@@ -90,7 +87,6 @@ class AccountControllerTest extends TestCase
     public function test_update_image(): void
     {
         $user = User::factory()->create();
-        Auth::login($user);
 
         $response = $this->actingAs($user)->post('/api/profile-image', [
             'image' => UploadedFile::fake()->image('test_avatar.jpg')
@@ -106,7 +102,6 @@ class AccountControllerTest extends TestCase
     public function test_delete_image()
     {
         $user = User::factory()->create();
-        Auth::login($user);
 
         $this->actingAs($user)->post('/api/profile-image', [
             'image' => UploadedFile::fake()->image('test_avatar.jpg')

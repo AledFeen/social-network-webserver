@@ -13,7 +13,6 @@ class UserTest extends TestCase
     public function test_user_observer_created()
     {
         $user = User::factory()->create();
-        Auth::login($user);
 
         $this->assertDatabaseHas('privacy_settings', ['user_id' => $user->id])
         ->assertDatabaseHas('accounts', ['user_id' => $user->id]);

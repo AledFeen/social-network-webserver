@@ -15,7 +15,6 @@ class PrivacySettingsControllerTest extends TestCase
     public function test_get_settings()
     {
         $user = User::factory()->create();
-        Auth::login($user);
 
         $response = $this->actingAs($user)->get('/api/privacy-settings', ['user_id' => $user->id]);
 
@@ -38,7 +37,6 @@ class PrivacySettingsControllerTest extends TestCase
     public function test_update_settings()
     {
         $user = User::factory()->create();
-        Auth::login($user);
 
         $response = $this->actingAs($user)->put('/api/privacy-settings', [
             'account_type' => 'private',
@@ -56,7 +54,6 @@ class PrivacySettingsControllerTest extends TestCase
     public function test_update_privacy_setting_request()
     {
         $user = User::factory()->create();
-        Auth::login($user);
 
         $response = $this->actingAs($user, 'web')
             ->put('/api/privacy-settings', [
