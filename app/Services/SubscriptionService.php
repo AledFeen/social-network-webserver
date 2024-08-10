@@ -7,6 +7,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Services\Blacklist\checkingBlacklist;
 use App\Services\Blacklist\MustCheckBlacklist;
+use App\Services\Paginate\PaginatedResponse;
 use Illuminate\Support\Facades\Auth;
 
 class SubscriptionService implements MustCheckBlacklist
@@ -47,38 +48,54 @@ class SubscriptionService implements MustCheckBlacklist
         return (bool)$deleted;
     }
 
-    public function subscribers(array $request)
+    public function subscribers(array $request): PaginatedResponse
     {
         $user = $this->findUser($request);
 
         $blockedByIds = $this->blockedBy();
 
-        $followers = $user->followers()
+        $paginatedFollowers = $user->followers()
             ->whereNotIn('follower_id', $blockedByIds)
             ->with('user.account')
-            ->get()
-            ->map(function ($subscription) {
-            return new UserDTO($subscription->follower->id, $subscription->follower->name, $subscription->follower->account->image);
+            ->paginate(15, ['*'], 'page', $request['page_id']);
+
+        $followers = $paginatedFollowers->map(function ($subscription) {
+            return new UserDTO(
+                $subscription->follower->id,
+                $subscription->follower->name,
+                $subscription->follower->account->image
+            );
         });
 
-        return $followers;
+        return new PaginatedResponse(
+            $followers,
+            $paginatedFollowers->currentPage(),
+            $paginatedFollowers->lastPage(),
+            $paginatedFollowers->total()
+        );
     }
 
-    public function subscriptions(array $request)
+    public function subscriptions(array $request): PaginatedResponse
     {
         $user = $this->findUser($request);
 
         $blockedByIds = $this->blockedBy();
 
-        $following = $user->following()
+        $paginatedFollowings = $user->following()
             ->whereNotIn('user_id', $blockedByIds)
             ->with('user.account')
-            ->get()
-            ->map(function ($subscription) {
+            ->paginate(15, ['*'], 'page', $request['page_id']);
+
+        $followings = $paginatedFollowings->map(function ($subscription) {
             return new UserDTO($subscription->user->id, $subscription->user->name, $subscription->user->account->image);
         });
 
-        return $following;
+        return new PaginatedResponse(
+            $followings,
+            $paginatedFollowings->currentPage(),
+            $paginatedFollowings->lastPage(),
+            $paginatedFollowings->total()
+        );
     }
 
     protected function findUser(array $request)

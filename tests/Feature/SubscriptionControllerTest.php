@@ -90,9 +90,12 @@ class SubscriptionControllerTest extends TestCase
             ['id' => $user_second->id, 'name' => $user_second->name,'image' => $account_second->image]
         ];
 
-        $response = $this->actingAs($user)->get("/api/subscribers?user_id={$user->id}");
+        $response = $this->actingAs($user)->get("/api/subscribers?user_id={$user->id}&page_id=1");
 
         $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 2])
             ->assertJsonFragment($expectedData[0])
             ->assertJsonFragment($expectedData[1]);
     }
@@ -121,9 +124,12 @@ class SubscriptionControllerTest extends TestCase
             ['id' => $user_second->id, 'name' => $user_second->name,'image' => $account_second->image]
         ];
 
-        $response = $this->actingAs($user)->get("/api/subscriptions?user_id={$user->id}");
+        $response = $this->actingAs($user)->get("/api/subscriptions?user_id={$user->id}&page_id=1");
 
         $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 2])
             ->assertJsonFragment($expectedData[0])
             ->assertJsonFragment($expectedData[1]);
     }

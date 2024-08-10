@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Subscription\SubscriptionGetRequest;
 use App\Http\Requests\Subscription\SubscriptionRequest;
+use App\Http\Requests\UserDTO\PaginatedUserDTOResource;
 use App\Http\Requests\UserDTO\UserDTOResource;
 use App\Services\SubscriptionService;
 
@@ -42,21 +44,21 @@ class SubscriptionController extends Controller
         return response()->json(['success' => $result], $result ? 200 : 400);
     }
 
-    public function getSubscribers(SubscriptionRequest $request)
+    public function getSubscribers(SubscriptionGetRequest $request)
     {
         $request = $request->validated();
 
         $followers = $this->service->subscribers($request);
 
-        return UserDTOResource::collection($followers);
+        return new PaginatedUserDTOResource($followers);
     }
 
-    public function getSubscriptions(SubscriptionRequest $request)
+    public function getSubscriptions(SubscriptionGetRequest $request)
     {
         $request = $request->validated();
 
-        $following = $this->service->subscriptions($request);
+        $followings = $this->service->subscriptions($request);
 
-        return UserDTOResource::collection($following);
+        return new PaginatedUserDTOResource($followings);
     }
 }

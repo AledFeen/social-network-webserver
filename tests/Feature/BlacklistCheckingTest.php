@@ -13,6 +13,7 @@ class BlacklistCheckingTest extends TestCase
 {
     use RefreshDatabase;
 
+
     public function test_get_subscribers_with_blocked_user(): void
     {
         $user = User::factory()->create();
@@ -41,9 +42,12 @@ class BlacklistCheckingTest extends TestCase
             ['id' => $user_first->id, 'name' => $user_first->name, 'image' => $account_first->image]
         ];
 
-        $response = $this->actingAs($user_third)->get("/api/subscribers?user_id={$user->id}");
+        $response = $this->actingAs($user_third)->get("/api/subscribers?user_id={$user->id}&page_id=1");
 
         $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 1])
             ->assertJsonFragment($expectedData)
             ->assertJsonMissing(['id' => $user_second->id]);
     }
@@ -76,10 +80,14 @@ class BlacklistCheckingTest extends TestCase
             ['id' => $user_first->id, 'name' => $user_first->name, 'image' => $account_first->image],
         ];
 
-        $response = $this->actingAs($user_third)->get("/api/subscriptions?user_id={$user->id}");
+        $response = $this->actingAs($user_third)->get("/api/subscriptions?user_id={$user->id}&page_id=1");
 
         $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 1])
             ->assertJsonFragment($expectedData)
             ->assertJsonMissing(['id' => $user_second->id]);
     }
+
 }
