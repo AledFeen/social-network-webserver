@@ -3,13 +3,14 @@
 namespace Database\Factories;
 
 use App\Models\Location;
+use App\Models\Post;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Account>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Post>
  */
-class AccountFactory extends Factory
+class PostFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -20,11 +21,17 @@ class AccountFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'date_of_birth' => fake()->date(),
-            'about_me' => fake()->sentence(),
-            'image' => 'default_avatar',
-            'real_name' => fake()->name(),
             'location' => Location::factory()->create()->name,
+            'repost_id' => Post::factory(),
+            'created_at' => now(),
+            'updated_at' => now()
         ];
+    }
+
+    public function withNoRepost(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'repost_id' => null,
+        ]);
     }
 }
