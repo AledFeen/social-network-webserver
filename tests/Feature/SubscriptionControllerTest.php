@@ -21,7 +21,7 @@ class SubscriptionControllerTest extends TestCase
 
         $response = $this->actingAs($user)->post('/api/subscribe', ['user_id' => $user_first->id]);
 
-        $response->assertStatus(200)
+        $response->assertStatus(201)
             ->assertJson(['success' => true]);
 
         $this->assertDatabaseHas('subscriptions', [

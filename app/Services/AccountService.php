@@ -4,11 +4,14 @@ namespace App\Services;
 
 use App\Models\Account;
 use App\Models\Location;
+use App\Services\Location\hasLocation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class AccountService
 {
+    use hasLocation;
+
     public function getMy()
     {
         return Account::where('user_id', Auth::id())->first();
@@ -21,18 +24,16 @@ class AccountService
 
     public function update($request): bool
     {
-        $location = $this->checkLocation($request['location']);
-        if ($location) {
-            $updated = Account::where('user_id', Auth::id())->update([
-                'real_name' => $request['real_name'],
-                'location' => $request['location'],
-                'date_of_birth' => $request['date_of_birth'],
-                'about_me' => $request['about_me'],
-            ]);
+        $location = $request['location'] ? $this->checkLocation($request['location']) : null;
 
-            return (bool)$updated;
-        }
-        return false;
+        $updated = Account::where('user_id', Auth::id())->update([
+            'real_name' => $request['real_name'],
+            'location' => $location,
+            'date_of_birth' => $request['date_of_birth'],
+            'about_me' => $request['about_me'],
+        ]);
+
+        return (bool)$updated;
     }
 
     public function updateImage($request): bool
@@ -66,15 +67,6 @@ class AccountService
             return false;
         }
         return false;
-    }
-
-    protected function checkLocation(string $location): bool
-    {
-        if (!Location::where('name', $location)->first()) {
-            Location::create(['name' => $location]);
-            return true;
-        }
-        return true;
     }
 
     protected function setImage($imageName): bool

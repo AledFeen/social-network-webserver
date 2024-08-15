@@ -23,7 +23,7 @@ class SubscriptionController extends Controller
 
         $result = $this->service->subscribe($request);
 
-        return response()->json(['success' => $result], $result ? 200 : 400);
+        return response()->json(['success' => $result], $result ? 201 : 400);
     }
 
     public function unsubscribeUser(SubscriptionRequest $request)
