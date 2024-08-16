@@ -5,12 +5,13 @@ namespace App\Services;
 use App\Models\Post;
 use App\Models\PostFile;
 use App\Services\Location\hasLocation;
+use App\Services\Location\MustHaveLocation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Ramsey\Collection\Collection;
 
-class PostService
+class PostService implements MustHaveLocation
 {
     use hasLocation;
 
@@ -24,45 +25,54 @@ class PostService
 
     public function updateText(array $request): bool
     {
-        $updated = Post::where('id', $request['post_id'])
-            ->update([
-                'text' => $request['text']
-            ]);
+        $post = Post::where('id', $request['post_id'])->first();
 
-        return (bool)$updated;
+        if($post->user_id == Auth::id()) {
+            $updated = $post
+                ->update([
+                    'text' => $request['text']
+                ]);
+
+            return (bool)$updated;
+        }
+        return false;
     }
 
     public function updateFiles(array $request): bool
     {
         $files = PostFile::where('post_id', $request['post_id'])->get();
-        if ($request['files']) {
-            DB::beginTransaction();
-            $images = [];
-            $videos = [];
-            try {
-                foreach ($request['files'] as $file) {
-                    $extension = $file->getClientOriginalExtension();
-                    if (in_array($extension, ['jpeg', 'png', 'jpg', 'gif', 'svg'])) {
-                        $images[] = $this->addImage($file, $request['post_id']);
-                    } else $videos[] = $this->addVideo($file, $request['post_id']);
+        $post = Post::where('id', $request['post_id'])->first();
+        if($post->user_id == Auth::id()) {
+            if ($request['files']) {
+                DB::beginTransaction();
+                $images = [];
+                $videos = [];
+                try {
+                    foreach ($request['files'] as $file) {
+                        $extension = $file->getClientOriginalExtension();
+                        if (in_array($extension, ['jpeg', 'png', 'jpg', 'gif', 'svg'])) {
+                            $images[] = $this->addImage($file, $request['post_id']);
+                        } else $videos[] = $this->addVideo($file, $request['post_id']);
+                    }
+                    PostFile::where('post_id', $request['post_id'])->delete();
+                    DB::commit();
+                    $this->deleteFiles($files);
+                    return true;
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    if ($files) {
+                        $this->clearStorage($images, $videos);
+                    }
+                    logger($e);
+                    return false;
                 }
-                PostFile::where('post_id', $request['post_id'])->delete();
-                DB::commit();
+            } else {
                 $this->deleteFiles($files);
+                PostFile::where('post_id', $request['post_id'])->delete();
                 return true;
-            } catch (\Exception $e) {
-                DB::rollBack();
-                if ($files) {
-                    $this->clearStorage($images, $videos);
-                }
-                logger($e);
-                return false;
             }
-        } else {
-            $this->deleteFiles($files);
-            PostFile::where('post_id', $request['post_id'])->delete();
-            return true;
         }
+        return false;
     }
 
     public function create(array $request): bool
@@ -80,16 +90,17 @@ class PostService
                     'location' => $location,
                     'text' => $request['text']
                 ]);
-                if ($files && $createdPost) {
+                if ($createdPost) {
                     foreach ($files as $file) {
                         $extension = $file->getClientOriginalExtension();
                         if (in_array($extension, ['jpeg', 'png', 'jpg', 'gif', 'svg'])) {
                             $images[] = $this->addImage($file, $createdPost->id);
                         } else $videos[] = $this->addVideo($file, $createdPost->id);
                     }
+                    DB::commit();
+                    return true;
                 }
-                DB::commit();
-                return true;
+                return false;
             } catch (\Exception $e) {
                 DB::rollBack();
                 if ($files) {

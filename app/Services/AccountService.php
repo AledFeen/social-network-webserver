@@ -5,10 +5,11 @@ namespace App\Services;
 use App\Models\Account;
 use App\Models\Location;
 use App\Services\Location\hasLocation;
+use App\Services\Location\MustHaveLocation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
-class AccountService
+class AccountService implements MustHaveLocation
 {
     use hasLocation;
 

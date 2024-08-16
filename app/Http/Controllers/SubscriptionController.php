@@ -7,17 +7,18 @@ use App\Http\Requests\Subscription\SubscriptionRequest;
 use App\Http\Requests\UserDTO\PaginatedUserDTOResource;
 use App\Http\Requests\UserDTO\UserDTOResource;
 use App\Services\SubscriptionService;
+use Illuminate\Http\JsonResponse;
 
 class SubscriptionController extends Controller
 {
-    protected $service;
+    protected SubscriptionService $service;
 
     public function __construct(SubscriptionService $service)
     {
         $this->service = $service;
     }
 
-    public function subscribeUser(SubscriptionRequest $request)
+    public function subscribeUser(SubscriptionRequest $request): JsonResponse
     {
         $request = $request->validated();
 
@@ -26,7 +27,7 @@ class SubscriptionController extends Controller
         return response()->json(['success' => $result], $result ? 201 : 400);
     }
 
-    public function unsubscribeUser(SubscriptionRequest $request)
+    public function unsubscribeUser(SubscriptionRequest $request): JsonResponse
     {
         $request = $request->validated();
 
@@ -35,7 +36,7 @@ class SubscriptionController extends Controller
         return response()->json(['success' => $result], $result ? 200 : 400);
     }
 
-    public function deleteSubscriber(SubscriptionRequest $request)
+    public function deleteSubscriber(SubscriptionRequest $request): JsonResponse
     {
         $request = $request->validated();
 
@@ -44,7 +45,7 @@ class SubscriptionController extends Controller
         return response()->json(['success' => $result], $result ? 200 : 400);
     }
 
-    public function getSubscribers(SubscriptionGetRequest $request)
+    public function getSubscribers(SubscriptionGetRequest $request): PaginatedUserDTOResource
     {
         $request = $request->validated();
 
@@ -53,7 +54,7 @@ class SubscriptionController extends Controller
         return new PaginatedUserDTOResource($followers);
     }
 
-    public function getSubscriptions(SubscriptionGetRequest $request)
+    public function getSubscriptions(SubscriptionGetRequest $request): PaginatedUserDTOResource
     {
         $request = $request->validated();
 

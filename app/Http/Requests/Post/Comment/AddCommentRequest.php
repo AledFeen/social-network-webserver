@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Post;
+namespace App\Http\Requests\Post\Comment;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePostRequest extends FormRequest
+class AddCommentRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,11 +22,11 @@ class CreatePostRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'post_id' => 'required|integer',
             'reply_id' => 'nullable|integer',
-            'location' => 'nullable|string|max:64',
-            'text' => 'nullable|string|max:512',
+            'text' => 'nullable|string|max:255',
             'files' => 'nullable|array',
-            'files.*' => 'file|mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,mkv|max:10240',
+            'files.*' => 'file|mimes:jpeg,png,jpg,gif,svg|max:10240',
         ];
     }
 }
