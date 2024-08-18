@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Post\Comment\AddCommentRequest;
+use App\Http\Requests\Post\Comment\DeleteCommentRequest;
 use App\Http\Requests\Post\Comment\UpdateCommentRequest;
 use App\Http\Requests\Post\CreatePostRequest;
 use App\Http\Requests\Post\DeletePostRequest;
 use App\Http\Requests\Post\Like\GetLikesRequest;
 use App\Http\Requests\Post\Like\LikeRequest;
 use App\Http\Requests\Post\UpdateFilesRequest;
+use App\Http\Requests\Post\UpdateTagsRequest;
 use App\Http\Requests\Post\UpdateTextRequest;
 use App\Http\Requests\UserDTO\PaginatedUserDTOResource;
 use App\Services\CommentService;
@@ -48,6 +50,15 @@ class PostController extends Controller
         return response()->json(['success' => $result], $result ? 200 : 400);
     }
 
+    public function updatePostTags(UpdateTagsRequest $request): JsonResponse
+    {
+        $request = $request->validated();
+
+        $result = $this->postService->updateTags($request);
+
+        return response()->json(['success' => $result], $result ? 200 : 400);
+    }
+
     public function updatePostFiles(UpdateFilesRequest $request): JsonResponse
     {
         $request = $request->validated();
@@ -80,6 +91,15 @@ class PostController extends Controller
         $request = $request->validated();
 
         $result = $this->commentService->update($request);
+
+        return response()->json(['success' => $result], $result ? 200 : 400);
+    }
+
+    public function deleteComment(DeleteCommentRequest $request): JsonResponse
+    {
+        $request = $request->validated();
+
+        $result = $this->commentService->delete($request);
 
         return response()->json(['success' => $result], $result ? 200 : 400);
     }

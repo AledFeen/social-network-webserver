@@ -44,8 +44,10 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::delete('/post', [\App\Http\Controllers\PostController::class, 'deletePost']);
     Route::put('/post', [\App\Http\Controllers\PostController::class, 'updatePostText']);
     Route::post('/post-files', [\App\Http\Controllers\PostController::class, 'updatePostFiles']);
+    Route::put('/post-tags', [\App\Http\Controllers\PostController::class, 'updatePostTags']);
     Route::post('/comment', [\App\Http\Controllers\PostController::class, 'leaveComment']);
     Route::put('/comment', [\App\Http\Controllers\PostController::class, 'updateComment']);
+    Route::delete('/comment', [\App\Http\Controllers\PostController::class, 'deleteComment']);
     Route::post('/like', [\App\Http\Controllers\PostController::class, 'likePost']);
     Route::get('/likes', [\App\Http\Controllers\PostController::class, 'getPostLikes']);
 

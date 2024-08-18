@@ -45,15 +45,34 @@ class CommentService
     }
 
     public function update(array $request) {
-        $post = Post::where('id', $request['post_id'])->first();
-
-        if($post->user_id == Auth::id()) {
-            $updated = Comment::where('id', $request['comment_id'])->update([
+        $comment = Comment::where('id', $request['comment_id'])->first();
+        if($comment->user_id == Auth::id()) {
+            $updated = $comment->update([
                 'text' => $request['text']
             ]);
             return (bool)$updated;
         }
         return false;
+    }
+
+    public function delete(array $request): bool
+    {
+        $comment = Comment::where('id', $request['comment_id'])->first();
+        $post = Post::where('id', $comment->post_id)->first();
+        if($post->user_id == Auth::id() || $comment->user_id == Auth::id()) {
+            $files = CommentFile::where('comment_id', $request['comment_id'])->get();
+            if($comment->delete()) {
+                foreach ($files as $file) {
+                    $this->deleteImage($file->filename);
+                }
+                return true;
+            } else {
+                return false;
+            }
+        }
+        else {
+            return false;
+        }
     }
 
     protected function addImage($file, int $commentId): string

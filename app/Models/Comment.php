@@ -9,4 +9,9 @@ class Comment extends Model
 {
     use HasFactory;
     protected $guarded = false;
+
+    public function files()
+    {
+        return $this->hasMany(CommentFile::class, 'comment_id');
+    }
 }
