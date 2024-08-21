@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Subscription\SubscriptionGetRequest;
 use App\Http\Requests\Subscription\SubscriptionRequest;
-use App\Http\Requests\UserDTO\PaginatedUserDTOResource;
-use App\Http\Requests\UserDTO\UserDTOResource;
+use App\Http\Resources\UserDTO\PaginatedUserDTOResource;
 use App\Services\SubscriptionService;
 use Illuminate\Http\JsonResponse;
 

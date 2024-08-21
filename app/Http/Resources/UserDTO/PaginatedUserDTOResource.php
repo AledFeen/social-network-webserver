@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\UserDTO;
+namespace App\Http\Resources\UserDTO;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 

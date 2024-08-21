@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Post\Comment\AddCommentRequest;
 use App\Http\Requests\Post\Comment\DeleteCommentRequest;
+use App\Http\Requests\Post\Comment\GetCommentRepliesRequest;
+use App\Http\Requests\Post\Comment\GetCommentRequest;
 use App\Http\Requests\Post\Comment\UpdateCommentRequest;
 use App\Http\Requests\Post\CreatePostRequest;
 use App\Http\Requests\Post\DeletePostRequest;
@@ -12,12 +14,12 @@ use App\Http\Requests\Post\Like\LikeRequest;
 use App\Http\Requests\Post\UpdateFilesRequest;
 use App\Http\Requests\Post\UpdateTagsRequest;
 use App\Http\Requests\Post\UpdateTextRequest;
-use App\Http\Requests\UserDTO\PaginatedUserDTOResource;
+use App\Http\Resources\CommentDTO\PaginatedCommentDTOResource;
+use App\Http\Resources\UserDTO\PaginatedUserDTOResource;
 use App\Services\CommentService;
 use App\Services\LikeService;
 use App\Services\PostService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class PostController extends Controller
 {
@@ -75,6 +77,24 @@ class PostController extends Controller
         $result = $this->postService->delete($request);
 
         return response()->json(['success' => $result], $result ? 200 : 400);
+    }
+
+    public function getComments(GetCommentRequest $request)
+    {
+        $request = $request->validated();
+
+        $result = $this->commentService->get($request);
+
+        return new PaginatedCommentDTOResource($result);
+    }
+
+    public function getCommentReplies(GetCommentRepliesRequest $request)
+    {
+        $request = $request->validated();
+
+        $result = $this->commentService->getReplies($request);
+
+        return new PaginatedCommentDTOResource($result);
     }
 
     public function leaveComment(AddCommentRequest $request): JsonResponse

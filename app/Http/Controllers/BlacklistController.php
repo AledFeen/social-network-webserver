@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\BlockedUser\BlockedUserRequest;
-use App\Http\Requests\UserDTO\UserDTOResource;
+use App\Http\Resources\UserDTO\UserDTOResource;
 use App\Services\BlockingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

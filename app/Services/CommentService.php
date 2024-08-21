@@ -4,14 +4,69 @@ namespace App\Services;
 
 use App\Models\Comment;
 use App\Models\CommentFile;
+use App\Models\dto\CommentDTO;
 use App\Models\Post;
 use App\Models\PostFile;
+use App\Services\Paginate\PaginatedResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class CommentService
 {
+
+    public function get(array $request): PaginatedResponse
+    {
+        $paginatedComments = Comment::where('post_id', $request['post_id'])
+            ->where('reply_id', null)
+            ->with('files')
+            ->withCount('replies')
+            ->paginate(15, ['*'], 'page', $request['page_id']);
+
+
+        $data = $this->getCommentsDTOs($paginatedComments);
+
+        return new PaginatedResponse(
+            $data,
+            $paginatedComments->currentPage(),
+            $paginatedComments->lastPage(),
+            $paginatedComments->total()
+        );
+
+    }
+
+    public function getReplies(array $request): PaginatedResponse
+    {
+        $paginatedComments = Comment::where('reply_id', $request['reply_id'])
+            ->with('files')
+            ->withCount('replies')
+            ->paginate(15, ['*'], 'page', $request['page_id']);
+
+        $data = $this->getCommentsDTOs($paginatedComments);
+
+        return new PaginatedResponse(
+            $data,
+            $paginatedComments->currentPage(),
+            $paginatedComments->lastPage(),
+            $paginatedComments->total()
+        );
+    }
+
+    protected function getCommentsDTOs($paginatedComments) {
+        return $paginatedComments->getCollection()->map(function ($comment) {
+            return new CommentDTO(
+                $comment->id,
+                $comment->post_id,
+                $comment->user_id,
+                $comment->text,
+                $comment->created_at,
+                $comment->updated_at,
+                $comment->replies_count,
+                $comment->files
+            );
+        });
+    }
+
     public function create(array $request): bool
     {
         if ($request['text']) {
