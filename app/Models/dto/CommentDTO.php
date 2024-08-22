@@ -9,37 +9,39 @@ use Illuminate\Support\Carbon;
 class CommentDTO
 {
     protected int $id;
-    protected int $post_id;
-    protected int $user_id;
-    protected int $hasReplies;
+    protected int $postId;
+    protected int $userId;
     protected string $text;
-    protected Carbon $created_at;
-    protected Carbon $updated_at;
-    /**
-     * @var CommentFile[] $files
-     */
+    protected Carbon $createdAt;
+    protected Carbon $updatedAt;
+    protected int $hasReplies;
     protected Collection $files;
 
-    // Конструктор
+    /**
+     * @param int $id
+     * @param int $post_id
+     * @param int $user_id
+     * @param string $text
+     * @param Carbon $created_at
+     * @param Carbon $updated_at
+     * @param int $hasReplies
+     * @param Collection $files
+     */
     public function __construct(
-        int $id,
-        int $post_id,
-        int $user_id,
-        string $text,
-        Carbon $created_at,
-        Carbon $updated_at,
-        int $hasReplies,
-        Collection $files
-    ) {
+        int $id, int $post_id, int $user_id, string $text,
+        Carbon $created_at, Carbon $updated_at, int $hasReplies,
+        Collection $files)
+    {
         $this->id = $id;
-        $this->post_id = $post_id;
-        $this->user_id = $user_id;
+        $this->postId = $post_id;
+        $this->userId = $user_id;
         $this->text = $text;
-        $this->created_at = $created_at;
-        $this->updated_at = $updated_at;
+        $this->createdAt = $created_at;
+        $this->updatedAt = $updated_at;
         $this->hasReplies = $hasReplies;
         $this->files = $files;
     }
+
 
     public function getId(): int
     {
@@ -48,12 +50,12 @@ class CommentDTO
 
     public function getPostId(): int
     {
-        return $this->post_id;
+        return $this->postId;
     }
 
     public function getUserId(): int
     {
-        return $this->user_id;
+        return $this->userId;
     }
 
     public function hasReplies(): int
@@ -68,12 +70,12 @@ class CommentDTO
 
     public function getCreatedAt()
     {
-        return $this->created_at;
+        return $this->createdAt;
     }
 
     public function getUpdatedAt()
     {
-        return $this->updated_at;
+        return $this->updatedAt;
     }
 
     public function getFiles(): Collection

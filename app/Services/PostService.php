@@ -3,12 +3,16 @@
 namespace App\Services;
 
 use App\Models\Comment;
+use App\Models\dto\MainPostDTO;
+use App\Models\dto\PostDTO;
+use App\Models\dto\UserDTO;
 use App\Models\Post;
 use App\Models\PostFile;
 use App\Models\PostTag;
 use App\Models\Tag;
 use App\Services\Location\hasLocation;
 use App\Services\Location\MustHaveLocation;
+use App\Services\Paginate\PaginatedResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -17,6 +21,75 @@ use Ramsey\Collection\Collection;
 class PostService implements MustHaveLocation
 {
     use hasLocation;
+
+    public function getUserPosts(array $request): PaginatedResponse
+    {
+        $paginatedPosts = Post::where('user_id', $request['user_id'])
+            ->withCount('reposts')
+            ->withCount('likes')
+            ->withCount('comments')
+            ->with('user.account')
+            ->with('files')
+            ->with('tags')
+            ->paginate(15, ['*'], 'page', $request['page_id']);
+
+        $postsWithMainPost = $paginatedPosts->getCollection()->map(function ($post) {
+            if ($post->repost_id !== null) {
+                $post->main_post = $this->getMainPost($post->repost_id);
+            }
+            return $post;
+        });
+
+        $data = $this->getPostDTOs($postsWithMainPost);
+
+        return new PaginatedResponse(
+            $data,
+            $paginatedPosts->currentPage(),
+            $paginatedPosts->lastPage(),
+            $paginatedPosts->total()
+        );
+    }
+
+    protected function getMainPost(int $post_id): MainPostDTO
+    {
+        $post = Post::where('id', $post_id)
+            ->with('user.account')
+            ->with('files')
+            ->with('tags')
+            ->first();
+
+        return new MainPostDTO(
+            $post->id,
+            new UserDTO($post->user->id, $post->user->name, $post->user->account->image),
+            $post->location,
+            $post->text,
+            $post->created_at,
+            $post->updated_at,
+            $post->tags,
+            $post->files
+        );
+    }
+
+    protected function getPostDTOs($paginatedPosts)
+    {
+        return $paginatedPosts->map(function ($post) {
+            return new PostDTO(
+                $post->id,
+                new UserDTO($post->user->id, $post->user->name, $post->user->account->image),
+                $post->repost_id,
+                $post->location,
+                $post->text,
+                $post->created_at,
+                $post->updated_at,
+                $post->reposts_count,
+                $post->likes_count,
+                $post->comments_count,
+                $post->tags,
+                $post->files,
+                $post->main_post
+            );
+        });
+    }
 
     public function delete(array $request): bool
     {

@@ -9,12 +9,14 @@ use App\Http\Requests\Post\Comment\GetCommentRequest;
 use App\Http\Requests\Post\Comment\UpdateCommentRequest;
 use App\Http\Requests\Post\CreatePostRequest;
 use App\Http\Requests\Post\DeletePostRequest;
+use App\Http\Requests\Post\GetPostsRequest;
 use App\Http\Requests\Post\Like\GetLikesRequest;
 use App\Http\Requests\Post\Like\LikeRequest;
 use App\Http\Requests\Post\UpdateFilesRequest;
 use App\Http\Requests\Post\UpdateTagsRequest;
 use App\Http\Requests\Post\UpdateTextRequest;
 use App\Http\Resources\CommentDTO\PaginatedCommentDTOResource;
+use App\Http\Resources\PostDTO\PaginatedPostDTOResource;
 use App\Http\Resources\UserDTO\PaginatedUserDTOResource;
 use App\Services\CommentService;
 use App\Services\LikeService;
@@ -32,6 +34,15 @@ class PostController extends Controller
         $this->postService = $postService;
         $this->commentService = $commentService;
         $this->likeService = $likeService;
+    }
+
+    public function getPosts(GetPostsRequest $request): PaginatedPostDTOResource
+    {
+        $request = $request->validated();
+
+        $result = $this->postService->getUserPosts($request);
+
+        return new PaginatedPostDTOResource($result);
     }
 
     public function createPost(CreatePostRequest $request): JsonResponse

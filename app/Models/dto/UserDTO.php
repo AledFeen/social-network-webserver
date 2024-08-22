@@ -8,6 +8,11 @@ class UserDTO
     protected $name;
     protected $image;
 
+    /**
+     * @param $id
+     * @param $name
+     * @param $image
+     */
     public function __construct($id, $name, $image)
     {
         $this->id = $id;
