@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 class CheckAccountType
 {
     use checkingSettings;
+
     /**
      * Handle an incoming request.
      *
@@ -25,8 +26,12 @@ class CheckAccountType
         if ($account_type === 'public') {
             return $next($request);
         } else {
-            return $this->checkSubscribe($user_id) ? $next($request) : response()
-                ->json(['success' => false, 'message' => 'No rights'], 403);
+            if ($this->checkOwner($user_id)) {
+                return $next($request);
+            } else {
+                return $this->checkSubscribe($user_id) ? $next($request) : response()
+                    ->json(['success' => false, 'message' => 'No rights'], 403);
+            }
         }
     }
 }

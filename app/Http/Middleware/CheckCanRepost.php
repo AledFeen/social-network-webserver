@@ -23,11 +23,19 @@ class CheckCanRepost
         if ($can_repost === 'all') {
             return $next($request);
         } else if ($can_repost === 'only_subscribers') {
-            return $this->checkSubscribe($user_id) ? $next($request) : response()
-                ->json(['success' => false, 'message' => 'No rights'], 403);
+            if ($this->checkOwner($user_id)) {
+                return $next($request);
+            } else {
+                return $this->checkSubscribe($user_id) ? $next($request) : response()
+                    ->json(['success' => false, 'message' => 'No rights'], 403);
+            }
         } else {
-            return response()
-                ->json(['success' => false, 'message' => 'No rights'], 403);
+            if ($this->checkOwner($user_id)) {
+                return $next($request);
+            } else {
+                return response()
+                    ->json(['success' => false, 'message' => 'No rights'], 403);
+            }
         }
     }
 }

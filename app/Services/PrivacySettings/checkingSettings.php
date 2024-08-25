@@ -13,6 +13,10 @@ trait checkingSettings
         return PrivacySettings::where('user_id', $user_id)->first();
     }
 
+    protected function checkOwner(int $user_id) {
+        return Auth::id() == $user_id;
+    }
+
     protected function checkSubscribe(int $user_id)
     {
         $result = Subscription::where('user_id', $user_id)

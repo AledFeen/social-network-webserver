@@ -23,12 +23,13 @@ class CheckCanMessage
 
         return match ($can_message) {
             'all' => $next($request),
-            'only_subscribers' => $this->checkSubscribe($user_id) ? $next($request) : response()
+            'only_subscribers' => $this->checkOwner($user_id) ? $this->checkSubscribe($user_id) ? $next($request) : response()
+                ->json(['success' => false, 'message' => 'No rights'], 403) : response()
                 ->json(['success' => false, 'message' => 'No rights'], 403),
-            'only_my_subscriptions' => $this->checkSubscription($user_id) ? $next($request) : response()
+            'only_my_subscriptions' => $this->checkOwner($user_id) ? $this->checkSubscription($user_id) ? $next($request) : response()
+                ->json(['success' => false, 'message' => 'No rights'], 403) : response()
                 ->json(['success' => false, 'message' => 'No rights'], 403),
-            default => response()
-                ->json(['success' => false, 'message' => 'No rights'], 403),
+            default => $this->checkOwner($user_id) ? $next($request) : response()->json(['success' => false, 'message' => 'No rights'], 403),
         };
     }
 }
