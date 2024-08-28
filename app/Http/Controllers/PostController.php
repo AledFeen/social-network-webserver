@@ -45,7 +45,7 @@ class PostController extends Controller
         return new PaginatedPostDTOResource($result);
     }
 
-    public function createPost(CreatePostRequest $request): JsonResponse
+    public function createPost(CreatePostRequest $request): JsonResponse //+
     {
         $request = $request->validated();
 
@@ -54,7 +54,7 @@ class PostController extends Controller
         return response()->json(['success' => $result], $result ? 201 : 400);
     }
 
-    public function updatePostText(UpdateTextRequest $request): JsonResponse
+    public function updatePostText(UpdateTextRequest $request): JsonResponse //+
     {
         $request = $request->validated();
 
@@ -63,7 +63,7 @@ class PostController extends Controller
         return response()->json(['success' => $result], $result ? 200 : 400);
     }
 
-    public function updatePostTags(UpdateTagsRequest $request): JsonResponse
+    public function updatePostTags(UpdateTagsRequest $request): JsonResponse //+
     {
         $request = $request->validated();
 
@@ -72,7 +72,7 @@ class PostController extends Controller
         return response()->json(['success' => $result], $result ? 200 : 400);
     }
 
-    public function updatePostFiles(UpdateFilesRequest $request): JsonResponse
+    public function updatePostFiles(UpdateFilesRequest $request): JsonResponse //+
     {
         $request = $request->validated();
 
@@ -81,7 +81,7 @@ class PostController extends Controller
         return response()->json(['success' => $result], $result ? 200 : 400);
     }
 
-    public function deletePost(DeletePostRequest $request): JsonResponse
+    public function deletePost(DeletePostRequest $request): JsonResponse //+
     {
         $request = $request->validated();
 
@@ -90,7 +90,7 @@ class PostController extends Controller
         return response()->json(['success' => $result], $result ? 200 : 400);
     }
 
-    public function getComments(GetCommentRequest $request)
+    public function getComments(GetCommentRequest $request): PaginatedCommentDTOResource
     {
         $request = $request->validated();
 
@@ -99,7 +99,7 @@ class PostController extends Controller
         return new PaginatedCommentDTOResource($result);
     }
 
-    public function getCommentReplies(GetCommentRepliesRequest $request)
+    public function getCommentReplies(GetCommentRepliesRequest $request): PaginatedCommentDTOResource
     {
         $request = $request->validated();
 
@@ -135,7 +135,7 @@ class PostController extends Controller
         return response()->json(['success' => $result], $result ? 200 : 400);
     }
 
-    public function likePost(LikeRequest $request): JsonResponse
+    public function likePost(LikeRequest $request): JsonResponse //+
     {
         $request = $request->validated();
 

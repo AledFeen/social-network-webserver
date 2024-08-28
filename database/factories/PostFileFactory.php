@@ -20,7 +20,7 @@ class PostFileFactory extends Factory
     {
         return [
             'post_id' => Post::factory(),
-            'type' => 'image',
+            'type' => fake()->randomElement(['image', 'video']),
             'filename' => substr(fake()->text(), 0, 255),
         ];
     }

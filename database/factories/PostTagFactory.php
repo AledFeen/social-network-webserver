@@ -19,7 +19,7 @@ class PostTagFactory extends Factory
     public function definition(): array
     {
         return [
-            'repost_id' => Post::factory(),
+            'post_id' => Post::factory(),
             'tag' => Tag::factory()
         ];
     }

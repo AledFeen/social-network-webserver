@@ -21,8 +21,9 @@ class PostFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'location' => Location::factory()->create()->name,
-            'repost_id' => Post::factory(),
+            'location' => Location::factory(),
+            'repost_id' => null,
+            'text' =>  substr(fake()->text(), 0, 512),
             'created_at' => now(),
             'updated_at' => now()
         ];

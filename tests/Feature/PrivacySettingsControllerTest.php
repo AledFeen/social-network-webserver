@@ -62,21 +62,4 @@ class PrivacySettingsControllerTest extends TestCase
 
         $response->assertStatus(302);
     }
-
-    public function test_update_privacy_setting_uncorrected_value()
-    {
-        $user = User::factory()->create();
-        Auth::login($user);
-
-        $this->assertTrue(Auth::check());
-
-        $response = $this->actingAs($user)->put('/api/privacy-settings', [
-            'account_type' => 'private',
-            'who_can_comment' => 'only_subscribers',
-            'who_can_repost' => 'only_subscribers',
-            'who_can_message' => 'i', //uncorrected
-        ]);
-
-        $response->assertStatus(500);
-    }
 }

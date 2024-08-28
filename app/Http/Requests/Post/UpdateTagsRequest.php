@@ -23,7 +23,7 @@ class UpdateTagsRequest extends FormRequest
     {
         return [
             'post_id' => 'required|integer',
-            'tags' => 'required|array',
+            'tags' => 'nullable|array',
             'tags.*' => 'string|max:32',
         ];
     }

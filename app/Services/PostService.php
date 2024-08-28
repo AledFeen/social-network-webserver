@@ -50,6 +50,172 @@ class PostService implements MustHaveLocation
         );
     }
 
+    public function delete(array $request): bool
+    {
+        $comments = Comment::where('post_id', $request['post_id'])
+            ->with('files')
+            ->get();
+
+        $commentFiles = $comments->flatMap(function ($comment) {
+            return $comment->files;
+        });
+        $this->deleteCommentsImage($commentFiles);
+
+        $postFiles = PostFile::where('post_id', $request['post_id'])->get();
+        $this->deleteFiles($postFiles);
+
+        $deleted = Post::where('id', $request['post_id'])
+            ->delete();
+
+        return (bool)$deleted;
+    }
+
+    public function updateTags(array $request): bool
+    {
+        $post = Post::where('id', $request['post_id'])->first();
+
+        if ($post->user_id == Auth::id()) {
+            DB::beginTransaction();
+
+            try {
+                $tags = PostTag::where('post_id', $request['post_id']);
+                if ($tags) {
+                    $tags->delete();
+                }
+
+                if($request['tags']) {
+                    $this->checkTagExistence($request['tags']);
+                    foreach ($request['tags'] as $tag) {
+                        PostTag::create([
+                            'post_id' => $request['post_id'],
+                            'tag' => $tag
+                        ]);
+                    }
+                }
+
+                DB::commit();
+                return true;
+            } catch (\Exception $e) {
+                DB::rollBack();
+                logger($e);
+                return false;
+            }
+
+        }
+        return false;
+    }
+
+    public function updateText(array $request): bool
+    {
+        $post = Post::where('id', $request['post_id'])->first();
+
+        if ($post->user_id == Auth::id()) {
+
+            $files = $post->files()->get();
+
+            if($request['text'] !== null) {
+                $updated = $post->update([
+                    'text' => $request['text']
+                ]);
+
+                return (bool)$updated;
+            } else {
+                if ($files->count() > 0) {
+                    $updated = $post->update([
+                        'text' => $request['text']
+                    ]);
+
+                    return (bool)$updated;
+                } else return false;
+            }
+        }
+        return false;
+    }
+
+    public function updateFiles(array $request): bool
+    {
+        $files = PostFile::where('post_id', $request['post_id'])->get();
+        $post = Post::where('id', $request['post_id'])->first();
+        if ($post->user_id == Auth::id()) {
+            if ($request['files']) {
+                DB::beginTransaction();
+                $images = [];
+                $videos = [];
+                try {
+                    PostFile::where('post_id', $request['post_id'])->delete();
+                    foreach ($request['files'] as $file) {
+                        $extension = $file->getClientOriginalExtension();
+                        if (in_array($extension, ['jpeg', 'png', 'jpg', 'gif', 'svg'])) {
+                            $images[] = $this->addImage($file, $request['post_id']);
+                        } else $videos[] = $this->addVideo($file, $request['post_id']);
+                    }
+                    DB::commit();
+                    $this->deleteFiles($files);
+                    return true;
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    if ($files) {
+                        $this->clearStorage($images, $videos);
+                    }
+                    logger($e);
+                    return false;
+                }
+            } else {
+                if ($post->text != null) {
+                    PostFile::where('post_id', $request['post_id'])->delete();
+                    $this->deleteFiles($files);
+                    return true;
+                } else return false;
+            }
+        }
+        return false;
+    }
+
+    public function create(array $request): bool
+    {
+        if ($request['text'] || $request['files']) {
+            DB::beginTransaction();
+            $files = $request['files'];
+            $images = [];
+            $videos = [];
+            try {
+                $location = $request['location'] ? $this->checkLocation($request['location']) : null;
+                $createdPost = $this->createPost($request['repost_id'], $location, $request['text']);
+                if ($createdPost) {
+                    if ($request['tags'] != null) {
+                        $this->checkTagExistence($request['tags']);
+                        foreach ($request['tags'] as $tag) {
+                            PostTag::create([
+                                'post_id' => $createdPost->id,
+                                'tag' => $tag
+                            ]);
+                        }
+                    }
+
+                    if ($request['files'] != null) {
+                        foreach ($files as $file) {
+                            $extension = $file->getClientOriginalExtension();
+                            if (in_array($extension, ['jpeg', 'png', 'jpg', 'gif', 'svg'])) {
+                                $images[] = $this->addImage($file, $createdPost->id);
+                            } else $videos[] = $this->addVideo($file, $createdPost->id);
+                        }
+                    }
+
+                    DB::commit();
+                    return true;
+                }
+                return false;
+            } catch (\Exception $e) {
+                DB::rollBack();
+                if ($files) {
+                    $this->clearStorage($images, $videos);
+                }
+                logger($e);
+                return false;
+            }
+        } else return false;
+    }
+
     protected function getMainPost(int $post_id): MainPostDTO
     {
         $post = Post::where('id', $post_id)
@@ -91,140 +257,6 @@ class PostService implements MustHaveLocation
         });
     }
 
-    public function delete(array $request): bool
-    {
-        $comments = Comment::where('post_id',  $request['post_id'])
-            ->with('files')
-            ->get();
-
-        $commentFiles = $comments->flatMap(function ($comment) {
-            return $comment->files;
-        });
-        $this->deleteCommentsImage($commentFiles);
-
-        $postFiles = PostFile::where('post_id', $request['post_id'])->get();
-        $this->deleteFiles($postFiles);
-
-        $deleted = Post::where('id', $request['post_id'])
-            ->delete();
-
-        return (bool)$deleted;
-    }
-
-    public function updateTags(array $request): bool
-    {
-        $post = Post::where('id',  $request['post_id'])->first();
-
-        if($post->user_id == Auth::id()) {
-
-            if(PostTag::where('post_id', $request['post_id'])) {
-                $this->checkTagExistence($request['tags']);
-                foreach ($request['tags'] as $tag) {
-                    PostTag::create([
-                        'post_id' => $request['post_id'],
-                        'tag' => $tag
-                    ]);
-                }
-                return true;
-            }
-            return false;
-        }
-        return false;
-    }
-
-    public function updateText(array $request): bool
-    {
-        $post = Post::where('id', $request['post_id'])->first();
-
-        if($post->user_id == Auth::id()) {
-            $updated = $post->update([
-                    'text' => $request['text']
-                ]);
-
-            return (bool)$updated;
-        }
-        return false;
-    }
-
-    public function updateFiles(array $request): bool
-    {
-        $files = PostFile::where('post_id', $request['post_id'])->get();
-        $post = Post::where('id', $request['post_id'])->first();
-        if($post->user_id == Auth::id()) {
-            if ($request['files']) {
-                DB::beginTransaction();
-                $images = [];
-                $videos = [];
-                try {
-                    foreach ($request['files'] as $file) {
-                        $extension = $file->getClientOriginalExtension();
-                        if (in_array($extension, ['jpeg', 'png', 'jpg', 'gif', 'svg'])) {
-                            $images[] = $this->addImage($file, $request['post_id']);
-                        } else $videos[] = $this->addVideo($file, $request['post_id']);
-                    }
-                    PostFile::where('post_id', $request['post_id'])->delete();
-                    DB::commit();
-                    $this->deleteFiles($files);
-                    return true;
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    if ($files) {
-                        $this->clearStorage($images, $videos);
-                    }
-                    logger($e);
-                    return false;
-                }
-            } else {
-                $this->deleteFiles($files);
-                PostFile::where('post_id', $request['post_id'])->delete();
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public function create(array $request): bool
-    {
-        if ($request['text'] || $request['files']) {
-            DB::beginTransaction();
-            $files = $request['files'];
-            $images = [];
-            $videos = [];
-            try {
-                $location = $request['location'] ? $this->checkLocation($request['location']) : null;
-                $createdPost = $this->createPost($request['repost_id'], $location, $request['text']);
-                if ($createdPost) {
-                    $this->checkTagExistence($request['tags']);
-
-                    foreach ($request['tags'] as $tag) {
-                        PostTag::create([
-                            'post_id' => $createdPost->id,
-                            'tag' => $tag
-                        ]);
-                    }
-
-                    foreach ($files as $file) {
-                        $extension = $file->getClientOriginalExtension();
-                        if (in_array($extension, ['jpeg', 'png', 'jpg', 'gif', 'svg'])) {
-                            $images[] = $this->addImage($file, $createdPost->id);
-                        } else $videos[] = $this->addVideo($file, $createdPost->id);
-                    }
-
-                    DB::commit();
-                    return true;
-                }
-                return false;
-            } catch (\Exception $e) {
-                DB::rollBack();
-                if ($files) {
-                    $this->clearStorage($images, $videos);
-                }
-                logger($e);
-                return false;
-            }
-        } else return false;
-    }
-
     protected function deleteCommentsImage($files): void
     {
         foreach ($files as $file) {
@@ -234,16 +266,18 @@ class PostService implements MustHaveLocation
 
     protected function checkTagExistence(array $tags)
     {
-        foreach ($tags as $tag) {
-            if(!Tag::where('name', $tag)->first()) {
-                Tag::create([
-                   'name' => $tag
-                ]);
+        if ($tags) {
+            foreach ($tags as $tag) {
+                if (!Tag::where('name', $tag)->first()) {
+                    Tag::create([
+                        'name' => $tag
+                    ]);
+                }
             }
         }
     }
 
-    protected function createPost(?int $repost_id, string $location, string $text)
+    protected function createPost(?int $repost_id, ?string $location, ?string $text)
     {
         return Post::create([
             'user_id' => Auth::id(),
