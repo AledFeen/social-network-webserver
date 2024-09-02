@@ -33,6 +33,19 @@ class UserTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
+    public function test_user_role() : void
+    {
+        $user = User::factory()->create();
+
+        $this->assertTrue($user->role == 'user');
+    }
+
+    public function test_admin_role() : void
+    {
+        $user = User::factory()->create(['role' => 1]);
+
+        $this->assertTrue($user->role == 'admin');
+    }
     /*
     / it sends email confirm letter
     /

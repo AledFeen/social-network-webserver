@@ -48,6 +48,13 @@ class User extends Authenticatable implements MustVerifyEmail
         'password' => 'hashed',
     ];
 
+    protected function role():Attribute
+    {
+        return new Attribute(
+            get: fn($value) => ['user','admin'][$value]
+        );
+    }
+
     protected function email(): Attribute{
         return Attribute::make(
           get: fn($value) => $value,
