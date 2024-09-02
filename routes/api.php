@@ -41,6 +41,7 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::delete('/delete-subscriber', [\App\Http\Controllers\SubscriptionController::class, 'deleteSubscriber']);
 
     Route::get('/posts', [\App\Http\Controllers\PostController::class, 'getPosts']);
+    Route::get('/reposts', [\App\Http\Controllers\PostController::class, 'getReposts']);
     Route::post('/post', [\App\Http\Controllers\PostController::class, 'createPost']);
     Route::delete('/post', [\App\Http\Controllers\PostController::class, 'deletePost']);
     Route::put('/post', [\App\Http\Controllers\PostController::class, 'updatePostText']);

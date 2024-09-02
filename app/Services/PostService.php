@@ -31,6 +31,36 @@ class PostService implements MustHaveLocation
             ->with('user.account')
             ->with('files')
             ->with('tags')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15, ['*'], 'page', $request['page_id']);
+
+        $postsWithMainPost = $paginatedPosts->getCollection()->map(function ($post) {
+            if ($post->repost_id !== null) {
+                $post->main_post = $this->getMainPost($post->repost_id);
+            }
+            return $post;
+        });
+
+        $data = $this->getPostDTOs($postsWithMainPost);
+
+        return new PaginatedResponse(
+            $data,
+            $paginatedPosts->currentPage(),
+            $paginatedPosts->lastPage(),
+            $paginatedPosts->total()
+        );
+    }
+
+    public function getReposts(array $request): PaginatedResponse
+    {
+        $paginatedPosts = Post::where('repost_id', $request['post_id'])
+            ->withCount('reposts')
+            ->withCount('likes')
+            ->withCount('comments')
+            ->with('user.account')
+            ->with('files')
+            ->with('tags')
+            ->orderBy('created_at', 'desc')
             ->paginate(15, ['*'], 'page', $request['page_id']);
 
         $postsWithMainPost = $paginatedPosts->getCollection()->map(function ($post) {
@@ -52,22 +82,27 @@ class PostService implements MustHaveLocation
 
     public function delete(array $request): bool
     {
-        $comments = Comment::where('post_id', $request['post_id'])
-            ->with('files')
-            ->get();
+        $post = Post::where('id', $request['post_id'])->first();
 
-        $commentFiles = $comments->flatMap(function ($comment) {
-            return $comment->files;
-        });
-        $this->deleteCommentsImage($commentFiles);
+        if($post->user_id == Auth::id()) {
+            $comments = Comment::where('post_id', $request['post_id'])
+                ->with('files')
+                ->get();
 
-        $postFiles = PostFile::where('post_id', $request['post_id'])->get();
-        $this->deleteFiles($postFiles);
+            $commentFiles = $comments->flatMap(function ($comment) {
+                return $comment->files;
+            });
 
-        $deleted = Post::where('id', $request['post_id'])
-            ->delete();
+            $this->deleteCommentsImage($commentFiles);
 
-        return (bool)$deleted;
+            $postFiles = PostFile::where('post_id', $request['post_id'])->get();
+            $this->deleteFiles($postFiles);
+
+            $deleted = Post::where('id', $request['post_id'])
+                ->delete();
+
+            return (bool)$deleted;
+        } else return false;
     }
 
     public function updateTags(array $request): bool

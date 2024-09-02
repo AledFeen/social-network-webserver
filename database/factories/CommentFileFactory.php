@@ -20,6 +20,7 @@ class CommentFileFactory extends Factory
         return [
             'comment_id' => Comment::factory(),
             'filename' => substr(fake()->text(), 0, 255),
+            'type' => 'image'
         ];
     }
 }
