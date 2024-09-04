@@ -2,7 +2,15 @@
 
 namespace App\Providers;
 
+use App\Models\Comment;
+use App\Models\Post;
+use App\Models\PostLike;
+use App\Models\Subscription;
 use App\Models\User;
+use App\Observers\CommentObserver;
+use App\Observers\PostLikeObserver;
+use App\Observers\PostObserver;
+use App\Observers\SubscriptionObserver;
 use App\Observers\UserObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -28,6 +36,10 @@ class EventServiceProvider extends ServiceProvider
     public function boot(): void
     {
         User::observe(UserObserver::class);
+        PostLike::observe(PostLikeObserver::class);
+        Comment::observe(CommentObserver::class);
+        Subscription::observe(SubscriptionObserver::class);
+        Post::observe(PostObserver::class);
     }
 
     /**
