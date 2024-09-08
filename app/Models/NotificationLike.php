@@ -9,4 +9,9 @@ class NotificationLike extends Model
 {
     use HasFactory;
     protected $guarded = false;
+
+    public function like()
+    {
+        return $this->belongsTo(PostLike::class, 'like_id');
+    }
 }

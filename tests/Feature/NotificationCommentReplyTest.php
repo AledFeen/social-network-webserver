@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Account;
 use App\Models\Comment;
 use App\Models\Post;
 use App\Models\User;
@@ -63,5 +64,56 @@ class NotificationCommentReplyTest extends TestCase
         ]);
 
         $this->assertDatabaseCount('notification_comment_replies', 0);
+    }
+
+    public function test_notification_comment_replies_get(): void
+    {
+        $user = User::factory()->create();
+        $user_first = User::factory()->create();
+        $user_second = User::factory()->create();
+
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+            ]);
+
+        $mainComment = Comment::factory()->create([
+            'post_id' => $post->id,
+            'user_id' => $user->id
+        ]);
+
+        $comment = Comment::factory()->create([
+            'post_id' => $post->id,
+            'user_id' => $user_first->id,
+            'reply_id' => $mainComment->id
+        ]);
+
+        $comment1 = Comment::factory()->create([
+            'post_id' => $post->id,
+            'user_id' => $user_second->id,
+            'reply_id' => $mainComment->id
+        ]);
+
+        $account_first = Account::where('user_id', $user_first->id)->first();
+        $account_second = Account::where('user_id', $user_second->id)->first();
+
+        $expectedData = [
+            [
+                'user' => ['id' => $user_first->id, 'name' => $user_first->name, 'image' => $account_first->image],
+                'post_id' => $post->id,
+                'text'=> $comment->text
+            ],
+            [
+                'user' => ['id' => $user_second->id, 'name' => $user_second->name,'image' => $account_second->image],
+                'post_id' => $post->id,
+                'text' => $comment1->text
+            ]
+        ];
+
+        $response = $this->actingAs($user)->get("/api/notification/comment-replies");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment($expectedData[0])
+            ->assertJsonFragment($expectedData[1]);
     }
 }

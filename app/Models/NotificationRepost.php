@@ -9,4 +9,9 @@ class NotificationRepost extends Model
 {
     use HasFactory;
     protected $guarded = false;
+
+    public function post()
+    {
+        return $this->belongsTo(Post::class, 'post_id');
+    }
 }

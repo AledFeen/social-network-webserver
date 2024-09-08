@@ -10,4 +10,9 @@ class NotificationFollow extends Model
     use HasFactory;
 
     protected $guarded = false;
+
+    public function follower()
+    {
+        return $this->belongsTo(User::class, 'follower_id');
+    }
 }

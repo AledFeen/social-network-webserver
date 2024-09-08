@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Account;
 use App\Models\Location;
 use App\Models\Post;
 use App\Models\PostLike;
@@ -53,5 +54,47 @@ class NotificationLikeTest extends TestCase
         ]);
 
         $this->assertDatabaseCount('notification_likes', 0);
+    }
+
+    public function test_notification_like_get(): void
+    {
+        $user = User::factory()->create();
+        $user_first = User::factory()->create();
+        $user_second = User::factory()->create();
+
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+            ]);
+
+        $like1 = PostLike::create([
+            'user_id' => $user_first->id,
+            'post_id' => $post->id
+        ]);
+
+        $like2 = PostLike::create([
+            'user_id' => $user_second->id,
+            'post_id' => $post->id
+        ]);
+
+        $account_first = Account::where('user_id', $user_first->id)->first();
+        $account_second = Account::where('user_id', $user_second->id)->first();
+
+        $expectedData = [
+            [
+                'user' => ['id' => $user_first->id, 'name' => $user_first->name, 'image' => $account_first->image],
+                'post_id' => $post->id
+            ],
+            [
+                'user' => ['id' => $user_second->id, 'name' => $user_second->name,'image' => $account_second->image],
+                'post_id' => $post->id
+            ]
+        ];
+
+        $response = $this->actingAs($user)->get("/api/notification/likes");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment($expectedData[0])
+            ->assertJsonFragment($expectedData[1]);
     }
 }

@@ -54,6 +54,12 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::post('/like', [\App\Http\Controllers\PostController::class, 'likePost']);
     Route::get('/likes', [\App\Http\Controllers\PostController::class, 'getPostLikes']);
 
+    Route::get('/notification/followers', [\App\Http\Controllers\NotificationController::class, 'getFollowers']);
+    Route::get('/notification/likes', [\App\Http\Controllers\NotificationController::class, 'getLikes']);
+    Route::get('/notification/comments', [\App\Http\Controllers\NotificationController::class, 'getComments']);
+    Route::get('/notification/comment-replies', [\App\Http\Controllers\NotificationController::class, 'getCommentReplies']);
+    Route::get('/notification/reposts', [\App\Http\Controllers\NotificationController::class, 'getReposts']);
+
     Route::group(['middleware' => ['account_type']], function () {
         Route::get('account-type-middleware', function () {
             return response()->json(['success' => true]);

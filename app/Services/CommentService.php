@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Comment;
 use App\Models\CommentFile;
 use App\Models\dto\CommentDTO;
+use App\Models\dto\UserDTO;
 use App\Models\Post;
 use App\Models\PostFile;
 use App\Services\Paginate\PaginatedResponse;
@@ -20,6 +21,7 @@ class CommentService
         $paginatedComments = Comment::where('post_id', $request['post_id'])
             ->where('reply_id', null)
             ->with('files')
+            ->with('user.account')
             ->withCount('replies')
             ->paginate(15, ['*'], 'page', $request['page_id']);
 
@@ -39,6 +41,7 @@ class CommentService
     {
         $paginatedComments = Comment::where('reply_id', $request['reply_id'])
             ->with('files')
+            ->with('user.account')
             ->withCount('replies')
             ->paginate(15, ['*'], 'page', $request['page_id']);
 
@@ -57,7 +60,11 @@ class CommentService
             return new CommentDTO(
                 $comment->id,
                 $comment->post_id,
-                $comment->user_id,
+                new UserDTO(
+                    $comment->user->id,
+                    $comment->user->name,
+                    $comment->user->account->image,
+                ),
                 $comment->text,
                 $comment->created_at,
                 $comment->updated_at,

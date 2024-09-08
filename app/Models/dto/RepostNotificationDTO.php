@@ -1,0 +1,55 @@
+<?php
+
+namespace App\Models\dto;
+
+use Illuminate\Support\Carbon;
+
+class RepostNotificationDTO
+{
+    protected int $id;
+    protected UserDTO $user;
+    protected int $postId;
+    protected int $repostId;
+    protected ?Carbon $createdAt;
+
+    /**
+     * @param int $id
+     * @param UserDTO $user
+     * @param int $postId
+     * @param int $repostId
+     * @param Carbon|null $createdAt
+     */
+    public function __construct(int $id, UserDTO $user, int $postId, int $repostId, ?Carbon $createdAt)
+    {
+        $this->id = $id;
+        $this->user = $user;
+        $this->postId = $postId;
+        $this->repostId = $repostId;
+        $this->createdAt = $createdAt;
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function getUser(): UserDTO
+    {
+        return $this->user;
+    }
+
+    public function getPostId(): int
+    {
+        return $this->postId;
+    }
+
+    public function getRepostId(): int
+    {
+        return $this->repostId;
+    }
+
+    public function getCreatedAt(): ?Carbon
+    {
+        return $this->createdAt;
+    }
+}

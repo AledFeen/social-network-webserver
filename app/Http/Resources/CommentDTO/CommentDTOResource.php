@@ -18,7 +18,7 @@ class CommentDTOResource extends JsonResource
         return [
             'id' => $this->getId(),
             'post_id' => $this->getPostId(),
-            'user_id' => $this->getUserId(),
+            'user' => new UserDTOResource($this->getUser()),
             'text' => $this->getText(),
             'created_at' => $this->getCreatedAt(),
             'updated_at' => $this->getUpdatedAt(),

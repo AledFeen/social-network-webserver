@@ -10,7 +10,7 @@ class CommentDTO
 {
     protected int $id;
     protected int $postId;
-    protected int $userId;
+    protected UserDTO $user;
     protected string $text;
     protected Carbon $createdAt;
     protected Carbon $updatedAt;
@@ -20,7 +20,7 @@ class CommentDTO
     /**
      * @param int $id
      * @param int $post_id
-     * @param int $user_id
+     * @param UserDTO $user
      * @param string $text
      * @param Carbon $created_at
      * @param Carbon $updated_at
@@ -28,13 +28,13 @@ class CommentDTO
      * @param Collection $files
      */
     public function __construct(
-        int $id, int $post_id, int $user_id, string $text,
+        int $id, int $post_id, UserDTO $user, string $text,
         Carbon $created_at, Carbon $updated_at, int $hasReplies,
         Collection $files)
     {
         $this->id = $id;
         $this->postId = $post_id;
-        $this->userId = $user_id;
+        $this->user = $user;
         $this->text = $text;
         $this->createdAt = $created_at;
         $this->updatedAt = $updated_at;
@@ -53,9 +53,9 @@ class CommentDTO
         return $this->postId;
     }
 
-    public function getUserId(): int
+    public function getUser(): UserDTO
     {
-        return $this->userId;
+        return $this->user;
     }
 
     public function hasReplies(): int

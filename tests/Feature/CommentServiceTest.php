@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Account;
 use App\Models\Comment;
 use App\Models\CommentFile;
 use App\Models\Location;
@@ -21,6 +22,8 @@ class CommentServiceTest extends TestCase
     {
         $user = User::factory()->create();
         $user1 = User::factory()->create();
+        $account = Account::where('user_id', $user->id)->first();
+        $account1 = Account::where('user_id', $user1->id)->first();
         $location = Location::factory()->create();
         $post = Post::factory()
             ->create([
@@ -60,7 +63,7 @@ class CommentServiceTest extends TestCase
             [
                 'id' => $comment->id,
                 'post_id' => $post->id,
-                'user_id' => $user->id,
+                'user' => ['id' => $user->id, 'name' => $user->name, 'image' => $account->image],
                 'text' => $comment->text,
                 'created_at' => $comment->created_at,
                 'updated_at' => $comment->updated_at,
@@ -77,7 +80,7 @@ class CommentServiceTest extends TestCase
             [
                 'id' => $comment1->id,
                 'post_id' => $post->id,
-                'user_id' => $user1->id,
+                'user' => ['id' => $user1->id, 'name' => $user1->name, 'image' => $account1->image],
                 'text' => $comment1->text,
                 'created_at' => $comment1->created_at,
                 'updated_at' => $comment1->updated_at,
@@ -113,6 +116,8 @@ class CommentServiceTest extends TestCase
     {
         $user = User::factory()->create();
         $user1 = User::factory()->create();
+        $account = Account::where('user_id', $user->id)->first();
+        $account1 = Account::where('user_id', $user1->id)->first();
         $location = Location::factory()->create();
         $post = Post::factory()
             ->create([
@@ -159,7 +164,7 @@ class CommentServiceTest extends TestCase
             [
                 'id' => $comment->id,
                 'post_id' => $post->id,
-                'user_id' => $user->id,
+                'user' => ['id' => $user->id, 'name' => $user->name, 'image' => $account->image],
                 'text' => $comment->text,
                 'created_at' => $comment->created_at,
                 'updated_at' => $comment->updated_at,
@@ -176,7 +181,7 @@ class CommentServiceTest extends TestCase
             [
                 'id' => $comment1->id,
                 'post_id' => $post->id,
-                'user_id' => $user1->id,
+                'user' => ['id' => $user1->id, 'name' => $user1->name, 'image' => $account1->image],
                 'text' => $comment1->text,
                 'created_at' => $comment1->created_at,
                 'updated_at' => $comment1->updated_at,

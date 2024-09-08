@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Account;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -54,5 +55,51 @@ class NotificationRepostTest extends TestCase
 
 
         $this->assertDatabaseCount('notification_reposts', 0);
+    }
+
+    public function test_notification_repost_get(): void
+    {
+        $user = User::factory()->create();
+        $user_first = User::factory()->create();
+        $user_second = User::factory()->create();
+
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+            ]);
+
+        $repost = Post::factory()
+            ->create([
+                'user_id' => $user_first->id,
+                'repost_id' => $post->id
+            ]);
+
+        $repost1 = Post::factory()
+            ->create([
+                'user_id' => $user_second->id,
+                'repost_id' => $post->id
+            ]);
+
+        $account_first = Account::where('user_id', $user_first->id)->first();
+        $account_second = Account::where('user_id', $user_second->id)->first();
+
+        $expectedData = [
+            [
+                'user' => ['id' => $user_first->id, 'name' => $user_first->name, 'image' => $account_first->image],
+                'post_id' => $repost->id,
+                'repost_id' => $post->id
+            ],
+            [
+                'user' => ['id' => $user_second->id, 'name' => $user_second->name,'image' => $account_second->image],
+                'post_id' => $repost1->id,
+                'repost_id' => $post->id
+            ]
+        ];
+
+        $response = $this->actingAs($user)->get("/api/notification/reposts");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment($expectedData[0])
+            ->assertJsonFragment($expectedData[1]);
     }
 }
