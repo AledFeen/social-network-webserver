@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\Location;
 use App\Models\Post;
 use App\Models\PostLike;
+use App\Models\PostTag;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -103,5 +104,45 @@ class PostLikeServiceTest extends TestCase
             ->assertJson(['success' => true]);
 
         $this->assertDatabaseEmpty('post_likes');
+    }
+
+    public function test_preferred_tags(): void
+    {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $location = Location::factory()->create();
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+                'location' => $location->name
+            ]);
+
+        $tag1 = Tag::factory()->create();
+        $tag2 = Tag::factory()->create();
+
+        PostTag::factory()->create([
+            'post_id' => $post->id,
+            'tag' => $tag1->name
+        ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post->id,
+            'tag' => $tag2->name
+        ]);
+
+        PostLike::create([
+            'user_id' => $user1->id,
+            'post_id' => $post->id
+        ]);
+
+        $this->assertDatabaseCount('preferred_tags', 2);
+        $this->assertDatabaseHas('preferred_tags', [
+           'user_id' => $user1->id,
+           'tag' => $tag1->name
+        ]);
+        $this->assertDatabaseHas('preferred_tags', [
+            'user_id' => $user1->id,
+            'tag' => $tag2->name
+        ]);
     }
 }

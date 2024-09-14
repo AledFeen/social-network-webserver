@@ -8,6 +8,7 @@ use App\Models\dto\CommentDTO;
 use App\Models\dto\UserDTO;
 use App\Models\Post;
 use App\Models\PostFile;
+use App\Services\Blacklist\checkingBlacklist;
 use App\Services\Paginate\PaginatedResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,10 +16,14 @@ use Illuminate\Support\Facades\Storage;
 
 class CommentService
 {
+    use checkingBlacklist;
 
     public function get(array $request): PaginatedResponse
     {
+        $blockedByIds = $this->blockedBy();
+
         $paginatedComments = Comment::where('post_id', $request['post_id'])
+            ->whereNotIn('user_id', $blockedByIds)
             ->where('reply_id', null)
             ->with('files')
             ->with('user.account')
@@ -39,7 +44,10 @@ class CommentService
 
     public function getReplies(array $request): PaginatedResponse
     {
+        $blockedByIds = $this->blockedBy();
+
         $paginatedComments = Comment::where('reply_id', $request['reply_id'])
+            ->whereNotIn('user_id', $blockedByIds)
             ->with('files')
             ->with('user.account')
             ->withCount('replies')

@@ -5,6 +5,8 @@ namespace App\Observers;
 use App\Models\NotificationLike;
 use App\Models\Post;
 use App\Models\PostLike;
+use App\Models\PostTag;
+use App\Models\PreferredTag;
 
 class PostLikeObserver
 {
@@ -13,7 +15,18 @@ class PostLikeObserver
      */
     public function created(PostLike $postLike): void
     {
-        $post = Post::where('id', $postLike->post_id)->first();
+        $post = $this->getPost($postLike);
+        $this->createNotification($post, $postLike);
+        $this->addPreferredTags($post, $postLike);
+    }
+
+    protected function getPost(PostLike $postLike)
+    {
+        return Post::where('id', $postLike->post_id)->first();
+    }
+
+    protected function createNotification(Post $post, PostLike $postLike)
+    {
         if ($post->user_id != $postLike->user_id) {
             NotificationLike::create([
                 'user_id' => $post->user_id,
@@ -22,35 +35,26 @@ class PostLikeObserver
         }
     }
 
-    /**
-     * Handle the PostLike "updated" event.
-     */
-    public function updated(PostLike $postLike): void
+    protected function addPreferredTags(Post $post, PostLike $postLike)
     {
-
+        $tags = PostTag::where('post_id', $post->id)->get();
+        foreach ($tags as $tag) {
+            if($this->checkPreferredTagExistence($tag->tag, $postLike->user_id)) {
+                PreferredTag::where('user_id', $postLike->user_id)
+                    ->where('tag', $tag->tag)
+                    ->increment('count');
+            } else {
+                PreferredTag::create([
+                   'user_id' => $postLike->user_id,
+                   'tag' => $tag->tag
+                ]);
+            }
+        }
     }
 
-    /**
-     * Handle the PostLike "deleted" event.
-     */
-    public function deleted(PostLike $postLike): void
+    protected function checkPreferredTagExistence(string $tag, int $user) : bool
     {
-        //
+        return (bool)PreferredTag::where('user_id', $user)->where('tag', $tag)->first();
     }
 
-    /**
-     * Handle the PostLike "restored" event.
-     */
-    public function restored(PostLike $postLike): void
-    {
-        //
-    }
-
-    /**
-     * Handle the PostLike "force deleted" event.
-     */
-    public function forceDeleted(PostLike $postLike): void
-    {
-        //
-    }
 }

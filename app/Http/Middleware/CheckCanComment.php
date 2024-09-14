@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Post;
 use App\Services\PrivacySettings\checkingSettings;
 use Closure;
 use Illuminate\Http\Request;
@@ -18,7 +19,8 @@ class CheckCanComment
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user_id = $request->input('user_id');
+        $post = Post::where('id', $request->post_id)->first();
+        $user_id = $post->user_id;
         $can_comment = $this->getSettings($user_id)->who_can_comment;
         if ($can_comment === 'all') {
             return $next($request);
