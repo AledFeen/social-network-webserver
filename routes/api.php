@@ -37,6 +37,8 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
         Route::get('/posts', [\App\Http\Controllers\PostController::class, 'getPosts']);
     });
 
+    Route::delete('ignore', [\App\Http\Controllers\PreferredTagController::class, 'ignore']);
+
     Route::get('/blocked-users', [\App\Http\Controllers\BlacklistController::class, 'getBlockedUsers']);
     Route::post('/block-user', [\App\Http\Controllers\BlacklistController::class, 'block']);
     Route::delete('/unblock-user', [\App\Http\Controllers\BlacklistController::class, 'unblock']);
