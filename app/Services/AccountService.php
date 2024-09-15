@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Account;
+use App\Models\dto\ProfileDTO;
 use App\Models\Location;
 use App\Services\Location\hasLocation;
 use App\Services\Location\MustHaveLocation;
@@ -18,9 +19,23 @@ class AccountService implements MustHaveLocation
         return Account::where('user_id', Auth::id())->first();
     }
 
-    public function get($request)
+    public function getProfile($request): ProfileDTO
     {
-        return Account::where('user_id', $request['user_id'])->first();
+        $account = Account::where('user_id', $request['user_id'])
+            ->with('user.privacy')
+            ->first();
+
+        return new ProfileDTO(
+            $account->user_id,
+            $account->user->name,
+            $account->image,
+            $account->birthday,
+            $account->about,
+            $account->real_name,
+            $account->location,
+            $account->user->privacy->account_type,
+            $account->user->privacy->who_can_message
+        );
     }
 
     public function update($request): bool

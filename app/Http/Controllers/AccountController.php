@@ -6,6 +6,7 @@ use App\Http\Requests\Account\GetAccountRequest;
 use App\Http\Requests\Account\UpdateAccountRequest;
 use App\Http\Requests\Account\UpdateProfileImageRequest;
 use App\Http\Resources\AccountResource;
+use App\Http\Resources\ProfileDTO\ProfileResource;
 use App\Models\Account;
 use App\Services\AccountService;
 use Illuminate\Http\JsonResponse;
@@ -29,13 +30,13 @@ class AccountController extends Controller
         return new AccountResource($data);
     }
 
-    public function getAccount(GetAccountRequest $request): AccountResource
+    public function getProfile(GetAccountRequest $request): ProfileResource
     {
         $request = $request->validated();
 
-        $data = $this->service->get($request);
+        $data = $this->service->getProfile($request);
 
-        return new AccountResource($data);
+        return new ProfileResource($data);
     }
 
     public function updateAccount(UpdateAccountRequest $request): JsonResponse

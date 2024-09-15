@@ -28,9 +28,8 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::post('/profile-image', [\App\Http\Controllers\AccountController::class, 'updateImage']);
     Route::delete('/profile-image', [\App\Http\Controllers\AccountController::class, 'deleteImage']);
 
-    //!!need to change
-    Route::get('/account', [\App\Http\Controllers\AccountController::class, 'getAccount']);
-    //
+    Route::get('/profile', [\App\Http\Controllers\AccountController::class, 'getProfile']);
+
     Route::group(['middleware' => ['account_type']], function () {
         Route::get('/subscribers', [\App\Http\Controllers\SubscriptionController::class, 'getSubscribers']);
         Route::get('/subscriptions', [\App\Http\Controllers\SubscriptionController::class, 'getSubscriptions']);
