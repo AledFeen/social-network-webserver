@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Account;
+use App\Models\PrivacySettings;
 use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,6 +29,38 @@ class SubscriptionControllerTest extends TestCase
             'user_id' => $user_first->id,
             'follower_id' => $user->id
         ]);
+    }
+
+    public function test_subscribe_user_with_private_account(): void
+    {
+        $user = User::factory()->create();
+        $user_first = User::factory()->create();
+
+        PrivacySettings::where('user_id', $user_first->id)->update([
+           'account_type' => 'private'
+        ]);
+
+        $response = $this->actingAs($user)->post('/api/subscribe', ['user_id' => $user_first->id]);
+
+        $response->assertStatus(400)
+            ->assertJson(['success' => false]);
+    }
+
+    public function test_subscribe_user_duplicate(): void
+    {
+        $user = User::factory()->create();
+        $user_first = User::factory()->create();
+
+        $response = $this->actingAs($user)->post('/api/subscribe', ['user_id' => $user_first->id]);
+
+        $response->assertStatus(201)
+            ->assertJson(['success' => true]);
+
+        $response = $this->actingAs($user)->post('/api/subscribe', ['user_id' => $user_first->id]);
+
+        $response->assertStatus(400)
+            ->assertJson(['success' => false]);
+
     }
 
     public function test_unsubscribe(): void

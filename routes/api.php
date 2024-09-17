@@ -46,6 +46,11 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::delete('/unsubscribe', [\App\Http\Controllers\SubscriptionController::class, 'unsubscribeUser']);
     Route::delete('/delete-subscriber', [\App\Http\Controllers\SubscriptionController::class, 'deleteSubscriber']);
 
+    Route::post('subscribe-request', [\App\Http\Controllers\SubscriptionRequestController::class, 'subscribe']);
+    Route::post('accept-request', [\App\Http\Controllers\SubscriptionRequestController::class, 'acceptRequest']);
+    Route::post('decline-request', [\App\Http\Controllers\SubscriptionRequestController::class, 'declineRequest']);
+    Route::get('subscription-requests', [\App\Http\Controllers\SubscriptionRequestController::class, 'getRequests']);
+
     Route::get('/reposts', [\App\Http\Controllers\PostController::class, 'getReposts']);
 
     Route::group(['middleware' => ['can_repost']], function () {
