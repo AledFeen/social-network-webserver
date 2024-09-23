@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Account;
 use App\Models\BlockedUser;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -58,6 +59,32 @@ class BlacklistControllerTest extends TestCase
         $this->assertDatabaseHas('blocked_users', [
             'user_id' => $user->id,
             'blocked_id' => $user_first->id
+        ]);
+    }
+
+    public function test_block_subscriber(): void
+    {
+        $user = User::factory()->create();
+        $user_first = User::factory()->create();
+
+        Subscription::factory()->create([
+            'user_id' => $user->id,
+            'follower_id' => $user_first->id
+        ]);
+
+        $response = $this->actingAs($user)->post('/api/block-user', ['user_id' => $user_first->id]);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('blocked_users', [
+            'user_id' => $user->id,
+            'blocked_id' => $user_first->id
+        ]);
+
+        $this->assertDatabaseMissing('subscriptions', [
+            'user_id' => $user->id,
+            'follower_id' => $user_first->id
         ]);
     }
 

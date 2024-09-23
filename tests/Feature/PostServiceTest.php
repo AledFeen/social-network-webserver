@@ -14,6 +14,8 @@ use App\Models\Post;
 use App\Models\PostFile;
 use App\Models\PostLike;
 use App\Models\PostTag;
+use App\Models\PreferredTag;
+use App\Models\Subscription;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,6 +26,463 @@ use Tests\TestCase;
 class PostServiceTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_get_post(): void
+    {
+        $user = User::factory()->create();
+        $tag1 = Tag::factory()->create();
+        $tag2 = Tag::factory()->create();
+        $location = Location::factory()->create();
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+                'location' => $location->name
+            ]);
+
+        $repost = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+                'location' => $location->name,
+                'repost_id' => $post->id
+            ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post->id,
+            'tag' => $tag1->name
+        ]);
+
+        PostTag::factory()->create([
+            'post_id' => $repost->id,
+            'tag' => $tag2->name
+        ]);
+
+        $file = PostFile::factory()->create([
+            'post_id' => $post->id
+        ]);
+
+        PostLike::create([
+            'user_id' => $user->id,
+            'post_id' => $repost->id
+        ]);
+
+        Comment::factory()->create([
+            'post_id' => $repost->id,
+            'user_id' => $user->id
+        ]);
+
+        $account = Account::where('user_id', $user->id)->first();
+
+        $expectedData = [
+            'id' => $repost->id,
+            'user' => ['id' => $user->id, 'name' => $user->name, 'image' => $account->image],
+            'repost_id' => $post->id,
+            'location' => $location->name,
+            'text' => $repost->text,
+            'created_at' => $repost->created_at,
+            'updated_at' => $repost->updated_at,
+            'repost_count' => 0,
+            'like_count' => 1,
+            'comment_count' => 1,
+            'tags' => [
+                ['name' => $tag2->name]
+            ],
+            'files' => [],
+            'main_post' => [
+                'id' => $post->id,
+                'user' => ['id' => $user->id, 'name' => $user->name, 'image' => $account->image],
+                'location' => $location->name,
+                'text' => $post->text,
+                'created_at' => $post->created_at,
+                'updated_at' => $post->updated_at,
+                'tags' => [
+                    ['name' => $tag1->name]
+                ],
+                'files' => [
+                    [
+                        'id' => $file->id,
+                        'post_id' => $file->post_id,
+                        'type' => $file->type,
+                        'filename' => $file->filename
+                    ]
+                ]
+            ]
+        ];
+
+        $response = $this->actingAs($user)->get("/api/post?post_id={$repost->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment($expectedData);
+    }
+
+    public function test_get_posts_by_tag(): void
+    {
+        $user = User::factory()->create();
+        $tag1 = Tag::factory()->create();
+        $tag2 = Tag::factory()->create();
+        $location = Location::factory()->create();
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+                'location' => $location->name
+            ]);
+
+        $repost = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+                'location' => $location->name,
+                'repost_id' => $post->id
+            ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post->id,
+            'tag' => $tag1->name
+        ]);
+
+        PostTag::factory()->create([
+            'post_id' => $repost->id,
+            'tag' => $tag2->name
+        ]);
+
+        $file = PostFile::factory()->create([
+            'post_id' => $post->id
+        ]);
+
+        PostLike::create([
+            'user_id' => $user->id,
+            'post_id' => $repost->id
+        ]);
+
+        Comment::factory()->create([
+            'post_id' => $repost->id,
+            'user_id' => $user->id
+        ]);
+
+        $account = Account::where('user_id', $user->id)->first();
+
+        $expectedData = [
+            [
+                'id' => $repost->id,
+                'user' => ['id' => $user->id, 'name' => $user->name, 'image' => $account->image],
+                'repost_id' => $post->id,
+                'location' => $location->name,
+                'text' => $repost->text,
+                'created_at' => $repost->created_at,
+                'updated_at' => $repost->updated_at,
+                'repost_count' => 0,
+                'like_count' => 1,
+                'comment_count' => 1,
+                'tags' => [
+                    ['name' => $tag2->name]
+                ],
+                'files' => [],
+                'main_post' => [
+                    'id' => $post->id,
+                    'user' => ['id' => $user->id, 'name' => $user->name, 'image' => $account->image],
+                    'location' => $location->name,
+                    'text' => $post->text,
+                    'created_at' => $post->created_at,
+                    'updated_at' => $post->updated_at,
+                    'tags' => [
+                        ['name' => $tag1->name]
+                    ],
+                    'files' => [
+                        [
+                            'id' => $file->id,
+                            'post_id' => $file->post_id,
+                            'type' => $file->type,
+                            'filename' => $file->filename
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $response = $this->actingAs($user)->get("/api/posts-by-tag?tag={$tag2->name}&page_id=1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 1])
+            ->assertJsonFragment($expectedData[0]);
+    }
+
+    public function test_get_recommended_posts(): void
+    {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $tag1 = Tag::factory()->create();
+        $tag2 = Tag::factory()->create();
+        $location = Location::factory()->create();
+
+        PreferredTag::factory()->create([
+            'user_id' => $user->id,
+            'tag' => $tag1->name
+        ]);
+
+        Subscription::factory()->create([
+            'user_id' => $user2->id,
+            'follower_id' => $user->id
+        ]);
+
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user1->id,
+                'location' => $location->name
+            ]);
+
+        Post::factory()
+            ->create([
+                'user_id' => $user->id,
+                'location' => $location->name
+            ]);
+
+        $repost = Post::factory()
+            ->create([
+                'user_id' => $user2->id,
+                'location' => $location->name,
+                'repost_id' => $post->id
+            ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post->id,
+            'tag' => $tag1->name
+        ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post->id,
+            'tag' => $tag2->name
+        ]);
+
+        $file = PostFile::factory()->create([
+            'post_id' => $post->id
+        ]);
+
+        PostLike::create([
+            'user_id' => $user->id,
+            'post_id' => $post->id
+        ]);
+
+        PostLike::create([
+            'user_id' => $user2->id,
+            'post_id' => $repost->id
+        ]);
+
+        PostLike::create([
+            'user_id' => $user->id,
+            'post_id' => $repost->id
+        ]);
+
+        Comment::factory()->create([
+            'post_id' => $post->id,
+            'user_id' => $user->id
+        ]);
+
+        $account1 = Account::where('user_id', $user1->id)->first();
+        $account2 = Account::where('user_id', $user2->id)->first();
+
+        $expectedData = [
+            [
+                'id' => $post->id,
+                'user' => ['id' => $user1->id, 'name' => $user1->name, 'image' => $account1->image],
+                'repost_id' => null,
+                'location' => $location->name,
+                'text' => $post->text,
+                'created_at' => $post->created_at,
+                'updated_at' => $post->updated_at,
+                'repost_count' => 1,
+                'like_count' => 2,
+                'comment_count' => 1,
+                'tags' => [
+                    ['name' => $tag1->name],
+                    ['name' => $tag2->name]
+                ],
+                'files' => [
+                    [
+                        'id' => $file->id,
+                        'post_id' => $file->post_id,
+                        'type' => $file->type,
+                        'filename' => $file->filename
+                    ]
+                ],
+                'main_post' => null
+            ],
+            [
+                'id' => $repost->id,
+                'user' => ['id' => $user2->id, 'name' => $user2->name, 'image' => $account2->image],
+                'repost_id' => $post->id,
+                'location' => $location->name,
+                'text' => $repost->text,
+                'created_at' => $repost->created_at,
+                'updated_at' => $repost->updated_at,
+                'repost_count' => 0,
+                'like_count' => 1,
+                'comment_count' => 0,
+                'tags' => [],
+                'files' => [],
+                'main_post' => [
+                    'id' => $post->id,
+                    'user' => ['id' => $user1->id, 'name' => $user1->name, 'image' => $account1->image],
+                    'location' => $location->name,
+                    'text' => $post->text,
+                    'created_at' => $post->created_at,
+                    'updated_at' => $post->updated_at,
+                    'tags' => [
+                        ['name' => $tag1->name],
+                        ['name' => $tag2->name]
+                    ],
+                    'files' => [
+                        [
+                            'id' => $file->id,
+                            'post_id' => $file->post_id,
+                            'type' => $file->type,
+                            'filename' => $file->filename
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $response = $this->actingAs($user)->get("/api/recommended-posts?&page_id=1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 2])
+            ->assertJsonFragment($expectedData[0])
+            ->assertJsonFragment($expectedData[1]);
+    }
+
+    public function test_get_feed_posts(): void
+    {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $tag1 = Tag::factory()->create();
+        $tag2 = Tag::factory()->create();
+        $location = Location::factory()->create();
+
+        Subscription::factory()->create([
+            'user_id' => $user1->id,
+            'follower_id' => $user->id
+        ]);
+
+        Subscription::factory()->create([
+            'user_id' => $user2->id,
+            'follower_id' => $user->id
+        ]);
+
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user1->id,
+                'location' => $location->name
+            ]);
+
+        $repost = Post::factory()
+            ->create([
+                'user_id' => $user2->id,
+                'location' => $location->name,
+                'repost_id' => $post->id
+            ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post->id,
+            'tag' => $tag1->name
+        ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post->id,
+            'tag' => $tag2->name
+        ]);
+
+        $file = PostFile::factory()->create([
+            'post_id' => $post->id
+        ]);
+
+        PostLike::create([
+            'user_id' => $user->id,
+            'post_id' => $post->id
+        ]);
+
+        Comment::factory()->create([
+            'post_id' => $post->id,
+            'user_id' => $user->id
+        ]);
+
+        $account1 = Account::where('user_id', $user1->id)->first();
+        $account2 = Account::where('user_id', $user2->id)->first();
+
+        $expectedData = [
+            [
+                'id' => $post->id,
+                'user' => ['id' => $user1->id, 'name' => $user1->name, 'image' => $account1->image],
+                'repost_id' => null,
+                'location' => $location->name,
+                'text' => $post->text,
+                'created_at' => $post->created_at,
+                'updated_at' => $post->updated_at,
+                'repost_count' => 1,
+                'like_count' => 1,
+                'comment_count' => 1,
+                'tags' => [
+                    ['name' => $tag1->name],
+                    ['name' => $tag2->name]
+                ],
+                'files' => [
+                    [
+                        'id' => $file->id,
+                        'post_id' => $file->post_id,
+                        'type' => $file->type,
+                        'filename' => $file->filename
+                    ]
+                ],
+                'main_post' => null
+            ],
+            [
+                'id' => $repost->id,
+                'user' => ['id' => $user2->id, 'name' => $user2->name, 'image' => $account2->image],
+                'repost_id' => $post->id,
+                'location' => $location->name,
+                'text' => $repost->text,
+                'created_at' => $repost->created_at,
+                'updated_at' => $repost->updated_at,
+                'repost_count' => 0,
+                'like_count' => 0,
+                'comment_count' => 0,
+                'tags' => [],
+                'files' => [],
+                'main_post' => [
+                    'id' => $post->id,
+                    'user' => ['id' => $user1->id, 'name' => $user1->name, 'image' => $account1->image],
+                    'location' => $location->name,
+                    'text' => $post->text,
+                    'created_at' => $post->created_at,
+                    'updated_at' => $post->updated_at,
+                    'tags' => [
+                        ['name' => $tag1->name],
+                        ['name' => $tag2->name]
+                    ],
+                    'files' => [
+                        [
+                            'id' => $file->id,
+                            'post_id' => $file->post_id,
+                            'type' => $file->type,
+                            'filename' => $file->filename
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $response = $this->actingAs($user)->get("/api/feed-posts?&page_id=1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 2])
+            ->assertJsonFragment($expectedData[1])
+            ->assertJsonFragment($expectedData[0]);
+    }
 
     public function test_get_user_post(): void
     {

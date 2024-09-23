@@ -9,6 +9,9 @@ use App\Http\Requests\Post\Comment\GetCommentRequest;
 use App\Http\Requests\Post\Comment\UpdateCommentRequest;
 use App\Http\Requests\Post\CreatePostRequest;
 use App\Http\Requests\Post\DeletePostRequest;
+use App\Http\Requests\Post\GetFeedPostsRequest;
+use App\Http\Requests\Post\GetPostRequest;
+use App\Http\Requests\Post\GetPostsByTagRequest;
 use App\Http\Requests\Post\GetPostsRequest;
 use App\Http\Requests\Post\GetRepostsRequest;
 use App\Http\Requests\Post\Like\GetLikesRequest;
@@ -18,6 +21,7 @@ use App\Http\Requests\Post\UpdateTagsRequest;
 use App\Http\Requests\Post\UpdateTextRequest;
 use App\Http\Resources\CommentDTO\PaginatedCommentDTOResource;
 use App\Http\Resources\PostDTO\PaginatedPostDTOResource;
+use App\Http\Resources\PostDTO\PostDTOResource;
 use App\Http\Resources\UserDTO\PaginatedUserDTOResource;
 use App\Services\CommentService;
 use App\Services\LikeService;
@@ -35,6 +39,42 @@ class PostController extends Controller
         $this->postService = $postService;
         $this->commentService = $commentService;
         $this->likeService = $likeService;
+    }
+
+    public function getPost(GetPostRequest $request): PostDTOResource
+    {
+        $request = $request->validated();
+
+        $result = $this->postService->getPost($request);
+
+        return new PostDTOResource($result);
+    }
+
+    public function getPostsByTag(GetPostsByTagRequest $request): PaginatedPostDTOResource
+    {
+        $request = $request->validated();
+
+        $result = $this->postService->getPostsByTag($request);
+
+        return new PaginatedPostDTOResource($result);
+    }
+
+    public function getRecommendedPosts(GetFeedPostsRequest $request): PaginatedPostDTOResource
+    {
+        $request = $request->validated();
+
+        $result = $this->postService->getRecommendationPosts($request);
+
+        return new PaginatedPostDTOResource($result);
+    }
+
+    public function getFeedPosts(GetFeedPostsRequest $request): PaginatedPostDTOResource
+    {
+        $request = $request->validated();
+
+        $result = $this->postService->getFeedPosts($request);
+
+        return new PaginatedPostDTOResource($result);
     }
 
     public function getPosts(GetPostsRequest $request): PaginatedPostDTOResource

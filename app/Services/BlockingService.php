@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\BlockedUser;
 use App\Models\dto\UserDTO;
+use App\Models\Subscription;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class BlockingService
 {
@@ -20,12 +22,24 @@ class BlockingService
 
     public function blockUser(array $request)
     {
-        $created = BlockedUser::create([
-           'user_id' => Auth::id(),
-           'blocked_id' => $request['user_id']
-        ]);
+        DB::beginTransaction();
+        try {
+            Subscription::where('user_id', Auth::id())
+                ->where('follower_id', $request['user_id'])
+                ->delete();
 
-        return (bool) $created;
+            $created = BlockedUser::create([
+                'user_id' => Auth::id(),
+                'blocked_id' => $request['user_id']
+            ]);
+
+            return (bool) $created;
+        }
+        catch (\Exception $e) {
+            DB::rollBack();
+            logger($e);
+            return false;
+        }
     }
 
     public function unblockUser(array $request)

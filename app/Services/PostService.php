@@ -8,8 +8,12 @@ use App\Models\dto\PostDTO;
 use App\Models\dto\UserDTO;
 use App\Models\Post;
 use App\Models\PostFile;
+use App\Models\PostLike;
 use App\Models\PostTag;
+use App\Models\PreferredTag;
+use App\Models\Subscription;
 use App\Models\Tag;
+use App\Services\Blacklist\checkingBlacklist;
 use App\Services\Location\hasLocation;
 use App\Services\Location\MustHaveLocation;
 use App\Services\Paginate\PaginatedResponse;
@@ -21,10 +25,53 @@ use Ramsey\Collection\Collection;
 class PostService implements MustHaveLocation
 {
     use hasLocation;
+    use checkingBlacklist;
 
-    public function getUserPosts(array $request): PaginatedResponse
+    public function getPost(array $request): PostDTO
     {
-        $paginatedPosts = Post::where('user_id', $request['user_id'])
+        $blockedByIds = $this->blockedBy();
+
+        $post = Post::where('id', $request['post_id'])
+            ->whereNotIn('user_id', $blockedByIds)
+            ->withCount('reposts')
+            ->withCount('likes')
+            ->withCount('comments')
+            ->with('user.account')
+            ->with('files')
+            ->with('tags')
+            ->first();
+
+        if($post) {
+            if ($post->repost_id !== null) {
+                $post->main_post = $this->getMainPost($post->repost_id);
+            }
+        }
+
+        return new PostDTO(
+            $post->id,
+            new UserDTO($post->user->id, $post->user->name, $post->user->account->image),
+            $post->repost_id,
+            $post->location,
+            $post->text,
+            $post->created_at,
+            $post->updated_at,
+            $post->reposts_count,
+            $post->likes_count,
+            $post->comments_count,
+            $post->tags,
+            $post->files,
+            $post->main_post
+        );
+    }
+
+    public function getPostsByTag(array $request): PaginatedResponse
+    {
+        $blockedByIds = $this->blockedBy();
+
+        $paginatedPosts = Post::whereHas('tags', function($query) use ($request) {
+            $query->where('name', $request['tag']);
+        })
+            ->whereNotIn('user_id', $blockedByIds)
             ->withCount('reposts')
             ->withCount('likes')
             ->withCount('comments')
@@ -34,12 +81,97 @@ class PostService implements MustHaveLocation
             ->orderBy('created_at', 'desc')
             ->paginate(15, ['*'], 'page', $request['page_id']);
 
-        $postsWithMainPost = $paginatedPosts->getCollection()->map(function ($post) {
-            if ($post->repost_id !== null) {
-                $post->main_post = $this->getMainPost($post->repost_id);
-            }
-            return $post;
-        });
+        $postsWithMainPost = $this->getPostsWithMainPosts($paginatedPosts);
+
+        $data = $this->getPostDTOs($postsWithMainPost);
+
+        return new PaginatedResponse(
+            $data,
+            $paginatedPosts->currentPage(),
+            $paginatedPosts->lastPage(),
+            $paginatedPosts->total()
+        );
+    }
+
+    public function getRecommendationPosts (array $request): PaginatedResponse{
+        $likedTags = PreferredTag::where('user_id', Auth::id())->pluck('tag');
+        $followedUserIds = Subscription::where('follower_id', Auth::id())->pluck('user_id');
+        $likedPosts = PostLike::whereIn('user_id', $followedUserIds)->pluck('post_id');
+        $blockedByIds = $this->blockedBy();
+
+        $paginatedPosts = Post::whereHas('tags', function($query) use ($likedTags) {
+            $query->whereIn('name', $likedTags);
+        })
+            ->orWhereIn('id', $likedPosts)
+            ->where('created_at', '>=',  now()->subWeeks(2))
+            ->whereNotIn('user_id', $blockedByIds)
+            ->withCount('reposts')
+            ->withCount('likes')
+            ->withCount('comments')
+            ->with('user.account')
+            ->with('files')
+            ->with('tags')
+            ->orderBy('likes_count', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15, ['*'], 'page', $request['page_id']);
+
+        $postsWithMainPost = $this->getPostsWithMainPosts($paginatedPosts);
+
+        $data = $this->getPostDTOs($postsWithMainPost);
+
+        return new PaginatedResponse(
+            $data,
+            $paginatedPosts->currentPage(),
+            $paginatedPosts->lastPage(),
+            $paginatedPosts->total()
+        );
+    }
+
+    public function getFeedPosts(array $request): PaginatedResponse {
+        $followingUserIds = Subscription::where('follower_id', Auth::id())
+            ->pluck('user_id')
+            ->toArray();
+        $blockedByIds = $this->blockedBy();
+
+        $paginatedPosts = Post::whereIn('user_id', $followingUserIds)
+            ->whereNotIn('user_id', $blockedByIds)
+            ->withCount('reposts')
+            ->withCount('likes')
+            ->withCount('comments')
+            ->with('user.account')
+            ->with('files')
+            ->with('tags')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15, ['*'], 'page', $request['page_id']);
+
+        $postsWithMainPost = $this->getPostsWithMainPosts($paginatedPosts);
+
+        $data = $this->getPostDTOs($postsWithMainPost);
+
+        return new PaginatedResponse(
+            $data,
+            $paginatedPosts->currentPage(),
+            $paginatedPosts->lastPage(),
+            $paginatedPosts->total()
+        );
+    }
+
+    public function getUserPosts(array $request): PaginatedResponse
+    {
+        $blockedByIds = $this->blockedBy();
+
+        $paginatedPosts = Post::where('user_id', $request['user_id'])
+            ->whereNotIn('user_id', $blockedByIds)
+            ->withCount('reposts')
+            ->withCount('likes')
+            ->withCount('comments')
+            ->with('user.account')
+            ->with('files')
+            ->with('tags')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15, ['*'], 'page', $request['page_id']);
+
+        $postsWithMainPost = $this->getPostsWithMainPosts($paginatedPosts);
 
         $data = $this->getPostDTOs($postsWithMainPost);
 
@@ -53,7 +185,10 @@ class PostService implements MustHaveLocation
 
     public function getReposts(array $request): PaginatedResponse
     {
+        $blockedByIds = $this->blockedBy();
+
         $paginatedPosts = Post::where('repost_id', $request['post_id'])
+            ->whereNotIn('user_id', $blockedByIds)
             ->withCount('reposts')
             ->withCount('likes')
             ->withCount('comments')
@@ -63,12 +198,7 @@ class PostService implements MustHaveLocation
             ->orderBy('created_at', 'desc')
             ->paginate(15, ['*'], 'page', $request['page_id']);
 
-        $postsWithMainPost = $paginatedPosts->getCollection()->map(function ($post) {
-            if ($post->repost_id !== null) {
-                $post->main_post = $this->getMainPost($post->repost_id);
-            }
-            return $post;
-        });
+        $postsWithMainPost = $this->getPostsWithMainPosts($paginatedPosts);
 
         $data = $this->getPostDTOs($postsWithMainPost);
 
@@ -249,6 +379,16 @@ class PostService implements MustHaveLocation
                 return false;
             }
         } else return false;
+    }
+
+
+    protected  function getPostsWithMainPosts($paginatedPosts) {
+        return $paginatedPosts->getCollection()->map(function ($post) {
+            if ($post->repost_id !== null) {
+                $post->main_post = $this->getMainPost($post->repost_id);
+            }
+            return $post;
+        });
     }
 
     protected function getMainPost(int $post_id): MainPostDTO

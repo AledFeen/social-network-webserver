@@ -27,6 +27,14 @@ class SubscriptionService implements MustCheckBlacklist
                 return false;
             }
 
+            $blockedByIds = $this->blockedBy();
+
+            foreach ($blockedByIds as $user) {
+                if($user == $user_id) {
+                    return false;
+                }
+            }
+
             if ($follower_id != $user_id) {
                 $created = Subscription::create([
                     'user_id' => $user_id,
