@@ -226,7 +226,7 @@ class BlacklistCheckingTest extends TestCase
             ->assertJsonMissing(['id' => $comment1->id]);
     }
 
-    /*
+
     public function test_get_post_banned()
     {
         $user = User::factory()->create();
@@ -244,10 +244,10 @@ class BlacklistCheckingTest extends TestCase
 
         $response = $this->actingAs($user)->get("/api/post?post_id={$post->id}");
 
-        $response->assertStatus(200)
+        $response->assertStatus(404)
             ->assertJsonMissing(['id' => $post->id]);
     }
-    */
+
 
     public function test_get_posts_by_tag_banned(): void
     {
@@ -280,4 +280,194 @@ class BlacklistCheckingTest extends TestCase
             ->assertJsonFragment(['total' => 0])
             ->assertJsonMissing(['id' => $post->id]);
     }
+
+    public function test_get_recommended_posts_banned(): void
+    {
+        //post like automatically creates preferred tag
+        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $tag1 = Tag::factory()->create();
+        $tag2 = Tag::factory()->create();
+        $location = Location::factory()->create();
+
+        Subscription::factory()->create([
+            'user_id' => $user2->id,
+            'follower_id' => $user->id
+        ]);
+
+        PreferredTag::factory()->create([
+           'user_id' => $user->id,
+           'tag' => $tag1->name
+        ]);
+
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user1->id,
+                'location' => $location->name
+            ]);
+
+        Post::factory()
+            ->create([
+                'user_id' => $user->id,
+                'location' => $location->name
+            ]);
+
+        $repost = Post::factory()
+            ->create([
+                'user_id' => $user2->id,
+                'location' => $location->name,
+                'repost_id' => $post->id
+            ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post->id,
+            'tag' => $tag1->name
+        ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post->id,
+            'tag' => $tag2->name
+        ]);
+
+        PostLike::create([
+            'user_id' => $user2->id,
+            'post_id' => $repost->id
+        ]);
+
+        Comment::factory()->create([
+            'post_id' => $post->id,
+            'user_id' => $user->id
+        ]);
+
+        BlockedUser::factory()->create([
+            'user_id' => $user1,
+            'blocked_id' => $user
+        ]);
+
+        BlockedUser::factory()->create([
+            'user_id' => $user2,
+            'blocked_id' => $user
+        ]);
+
+        $response = $this->actingAs($user)->get("/api/recommended-posts?&page_id=1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 0]);
+    }
+
+    public function test_get_feed_posts_banned(): void
+    {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $location = Location::factory()->create();
+
+        Subscription::factory()->create([
+            'user_id' => $user1->id,
+            'follower_id' => $user->id
+        ]);
+
+        Subscription::factory()->create([
+            'user_id' => $user2->id,
+            'follower_id' => $user->id
+        ]);
+
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user1->id,
+                'location' => $location->name
+            ]);
+
+        Post::factory()
+            ->create([
+                'user_id' => $user2->id,
+                'location' => $location->name,
+                'repost_id' => $post->id
+            ]);
+
+        BlockedUser::factory()->create([
+            'user_id' => $user1,
+            'blocked_id' => $user
+        ]);
+
+        BlockedUser::factory()->create([
+            'user_id' => $user2,
+            'blocked_id' => $user
+        ]);
+
+        $response = $this->actingAs($user)->get("/api/feed-posts?&page_id=1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 0]);
+    }
+
+    public function test_get_user_post_banned(): void
+    {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $location = Location::factory()->create();
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user1->id,
+                'location' => $location->name
+            ]);
+
+        Post::factory()
+            ->create([
+                'user_id' => $user1->id,
+                'location' => $location->name,
+                'repost_id' => $post->id
+            ]);
+
+
+        BlockedUser::factory()->create([
+            'user_id' => $user1,
+            'blocked_id' => $user
+        ]);
+
+        $response = $this->actingAs($user)->get("/api/posts?user_id={$user1->id}&page_id=1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 0]);
+    }
+
+    public function test_get_reposts_banned(): void
+    {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $location = Location::factory()->create();
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user1->id,
+                'location' => $location->name
+            ]);
+
+        Post::factory()
+            ->create([
+                'user_id' => $user1->id,
+                'location' => $location->name,
+                'repost_id' => $post->id
+            ]);
+
+
+        BlockedUser::factory()->create([
+            'user_id' => $user1,
+            'blocked_id' => $user
+        ]);
+
+        $response = $this->actingAs($user)->get("/api/reposts?post_id={$post->id}&page_id=1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 0]);
+    }
+
 }

@@ -41,11 +41,15 @@ class PostController extends Controller
         $this->likeService = $likeService;
     }
 
-    public function getPost(GetPostRequest $request): PostDTOResource
+    public function getPost(GetPostRequest $request)
     {
         $request = $request->validated();
 
         $result = $this->postService->getPost($request);
+
+        if (!$result) {
+            return response()->json(['error' => 'Post not found'], 404);
+        }
 
         return new PostDTOResource($result);
     }

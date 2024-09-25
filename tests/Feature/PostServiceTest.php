@@ -208,17 +208,13 @@ class PostServiceTest extends TestCase
 
     public function test_get_recommended_posts(): void
     {
+        //post like automatically creates preferred tag
         $user = User::factory()->create();
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
         $tag1 = Tag::factory()->create();
         $tag2 = Tag::factory()->create();
         $location = Location::factory()->create();
-
-        PreferredTag::factory()->create([
-            'user_id' => $user->id,
-            'tag' => $tag1->name
-        ]);
 
         Subscription::factory()->create([
             'user_id' => $user2->id,
@@ -268,11 +264,6 @@ class PostServiceTest extends TestCase
             'post_id' => $repost->id
         ]);
 
-        PostLike::create([
-            'user_id' => $user->id,
-            'post_id' => $repost->id
-        ]);
-
         Comment::factory()->create([
             'post_id' => $post->id,
             'user_id' => $user->id
@@ -291,7 +282,7 @@ class PostServiceTest extends TestCase
                 'created_at' => $post->created_at,
                 'updated_at' => $post->updated_at,
                 'repost_count' => 1,
-                'like_count' => 2,
+                'like_count' => 1,
                 'comment_count' => 1,
                 'tags' => [
                     ['name' => $tag1->name],

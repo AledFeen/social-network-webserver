@@ -27,7 +27,7 @@ class PostService implements MustHaveLocation
     use hasLocation;
     use checkingBlacklist;
 
-    public function getPost(array $request): PostDTO
+    public function getPost(array $request): ?PostDTO
     {
         $blockedByIds = $this->blockedBy();
 
@@ -40,6 +40,10 @@ class PostService implements MustHaveLocation
             ->with('files')
             ->with('tags')
             ->first();
+
+        if (!$post) {
+            return null;
+        }
 
         if($post) {
             if ($post->repost_id !== null) {
@@ -99,12 +103,14 @@ class PostService implements MustHaveLocation
         $likedPosts = PostLike::whereIn('user_id', $followedUserIds)->pluck('post_id');
         $blockedByIds = $this->blockedBy();
 
-        $paginatedPosts = Post::whereHas('tags', function($query) use ($likedTags) {
-            $query->whereIn('name', $likedTags);
+        $paginatedPosts = Post::where(function ($query) use ($likedTags, $likedPosts, $blockedByIds) {
+            $query->whereHas('tags', function($query) use ($likedTags) {
+                $query->whereIn('name', $likedTags);
+            })
+                ->orWhereIn('id', $likedPosts);
         })
-            ->orWhereIn('id', $likedPosts)
-            ->where('created_at', '>=',  now()->subWeeks(2))
             ->whereNotIn('user_id', $blockedByIds)
+            ->where('created_at', '>=', now()->subWeeks(2))
             ->withCount('reposts')
             ->withCount('likes')
             ->withCount('comments')
