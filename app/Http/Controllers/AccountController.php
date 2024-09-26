@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Account\GetAccountRequest;
+use App\Http\Requests\Account\SearchProfileRequest;
 use App\Http\Requests\Account\UpdateAccountRequest;
 use App\Http\Requests\Account\UpdateProfileImageRequest;
 use App\Http\Resources\AccountResource;
 use App\Http\Resources\ProfileDTO\ProfileResource;
+use App\Http\Resources\UserDTO\PaginatedUserDTOResource;
 use App\Models\Account;
 use App\Services\AccountService;
 use Illuminate\Http\JsonResponse;
@@ -23,6 +25,15 @@ class AccountController extends Controller
         $this->service = $service;
     }
 
+    public function getSearchProfiles(SearchProfileRequest $request): PaginatedUserDTOResource
+    {
+        $request = $request->validated();
+
+        $result = $this->service->findProfile($request);
+
+        return new PaginatedUserDTOResource($result);
+    }
+
     public function getMyAccount(): AccountResource
     {
         $data = $this->service->getMy();
@@ -30,11 +41,15 @@ class AccountController extends Controller
         return new AccountResource($data);
     }
 
-    public function getProfile(GetAccountRequest $request): ProfileResource
+    public function getProfile(GetAccountRequest $request)
     {
         $request = $request->validated();
 
         $data = $this->service->getProfile($request);
+
+        if (!$data) {
+            return response()->json(['error' => 'Post not found'], 404);
+        }
 
         return new ProfileResource($data);
     }

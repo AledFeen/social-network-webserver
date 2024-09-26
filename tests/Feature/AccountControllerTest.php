@@ -14,6 +14,44 @@ use Tests\TestCase;
 class AccountControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_find_profile(): void
+    {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create(['name' => 'Alice']);
+        $user2 = User::factory()->create(['name' => 'Charlie']);
+        $user3 = User::factory()->create(['name' => 'Bob']);
+        User::factory()->create(['name' => 'adam']);
+
+        Account::where('user_id', $user1->id)->update([
+            'real_name' => 'lieten'
+        ]);
+
+        Account::where('user_id', $user3->id)->update([
+            'real_name' => 'Polietelen'
+        ]);
+
+        $account1 = Account::where('user_id', $user1->id)->first();
+        $account2 = Account::where('user_id', $user2->id)->first();
+        $account3 = Account::where('user_id', $user3->id)->first();
+
+        $expectedData = [
+            ['id' => $user1->id, 'name' => $user1->name, 'image' => $account1->image],
+            ['id' => $user2->id, 'name' => $user2->name, 'image' => $account2->image],
+            ['id' => $user3->id, 'name' => $user3->name, 'image' => $account3->image],
+        ];
+
+        $response = $this->actingAs($user)->get("/api/search-profile?search_request=lie&page_id=1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 3])
+            ->assertJsonFragment($expectedData[0])
+            ->assertJsonFragment($expectedData[1])
+            ->assertJsonFragment($expectedData[2]);
+    }
+
     public function test_get_my_account(): void
     {
         $user = User::factory()->create();
@@ -84,7 +122,7 @@ class AccountControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJson(['success' => true]);
 
-        $this->assertDatabaseHas('accounts', ['real_name' => 'vsevolod', 'about_me' => 'hello world', 'location' =>  $location->name, 'date_of_birth' => null]);
+        $this->assertDatabaseHas('accounts', ['real_name' => 'vsevolod', 'about_me' => 'hello world', 'location' => $location->name, 'date_of_birth' => null]);
     }
 
     public function test_update_image(): void

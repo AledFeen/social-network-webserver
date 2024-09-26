@@ -4,26 +4,64 @@ namespace App\Services;
 
 use App\Models\Account;
 use App\Models\dto\ProfileDTO;
+use App\Models\dto\UserDTO;
 use App\Models\Location;
+use App\Models\User;
+use App\Services\Blacklist\checkingBlacklist;
 use App\Services\Location\hasLocation;
 use App\Services\Location\MustHaveLocation;
+use App\Services\Paginate\PaginatedResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class AccountService implements MustHaveLocation
 {
     use hasLocation;
+    use checkingBlacklist;
 
-    public function getMy()
+    public function findProfile($request): PaginatedResponse
     {
-        return Account::where('user_id', Auth::id())->first();
+        $blockedByIds = $this->blockedBy();
+        $name = $request['search_request'];
+
+        $paginatedUsers = User::where(function($query) use ($name) {
+            $query->WhereHas('account', function($query) use ($name) {
+                $query->where('real_name', 'like', '%' . $name . '%');
+            })
+            ->orWhere('name', 'like', '%' . $name . '%');
+        })
+            ->whereNotIn('id', $blockedByIds)
+            ->with('account')
+            ->paginate(15, ['*'], 'page', $request['page_id']);
+
+        $users = $paginatedUsers->map(function ($user) {
+            return new UserDTO(
+                $user->id,
+                $user->name,
+                $user->account->image
+            );
+        });
+
+        return new PaginatedResponse(
+            $users,
+            $paginatedUsers->currentPage(),
+            $paginatedUsers->lastPage(),
+            $paginatedUsers->total()
+        );
     }
 
-    public function getProfile($request): ProfileDTO
+    public function getProfile($request): ?ProfileDTO
     {
+        $blockedByIds = $this->blockedBy();
+
         $account = Account::where('user_id', $request['user_id'])
+            ->whereNotIn('user_id', $blockedByIds)
             ->with('user.privacy')
             ->first();
+
+        if(!$account) {
+            return null;
+        }
 
         return new ProfileDTO(
             $account->user_id,
@@ -36,6 +74,11 @@ class AccountService implements MustHaveLocation
             $account->user->privacy->account_type,
             $account->user->privacy->who_can_message
         );
+    }
+
+    public function getMy()
+    {
+        return Account::where('user_id', Auth::id())->first();
     }
 
     public function update($request): bool

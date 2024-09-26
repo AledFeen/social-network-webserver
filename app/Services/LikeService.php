@@ -17,7 +17,7 @@ class LikeService implements MustCheckBlacklist
     {
         $likes = PostLike::where('post_id', $request['post_id'])
             ->whereNotIn('user_id', $this->blockedBy())
-            ->with(['user.account'])
+            ->with('user.account')
             ->paginate(15, ['*'], 'page', $request['page_id']);
 
         $users = $likes->map(function ($like) {

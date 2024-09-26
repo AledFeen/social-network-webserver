@@ -470,4 +470,24 @@ class BlacklistCheckingTest extends TestCase
             ->assertJsonFragment(['total' => 0]);
     }
 
+    public function test_find_profile_banned(): void
+    {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create(['name' => 'Charlie']);
+
+        BlockedUser::factory()->create([
+            'user_id' => $user1->id,
+            'blocked_id' => $user->id
+        ]);
+
+        User::factory()->create(['name' => 'adam']);
+
+        $response = $this->actingAs($user)->get("/api/search-profile?search_request=lie&page_id=1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 0]);
+    }
+
 }

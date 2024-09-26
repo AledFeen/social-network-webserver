@@ -29,14 +29,15 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::delete('/profile-image', [\App\Http\Controllers\AccountController::class, 'deleteImage']);
 
     Route::get('/profile', [\App\Http\Controllers\AccountController::class, 'getProfile']);
+    Route::get('/search-profile', [\App\Http\Controllers\AccountController::class, 'getSearchProfiles']);
 
     Route::group(['middleware' => ['account_type']], function () {
         Route::get('/subscribers', [\App\Http\Controllers\SubscriptionController::class, 'getSubscribers']);
         Route::get('/subscriptions', [\App\Http\Controllers\SubscriptionController::class, 'getSubscriptions']);
         Route::get('/posts', [\App\Http\Controllers\PostController::class, 'getPosts']);
     });
-
     Route::get('/post', [\App\Http\Controllers\PostController::class, 'getPost']);
+
     Route::get('/posts-by-tag', [\App\Http\Controllers\PostController::class, 'getPostsByTag']);
     Route::get('/feed-posts', [\App\Http\Controllers\PostController::class, 'getFeedPosts']);
     Route::get('/recommended-posts', [\App\Http\Controllers\PostController::class, 'getRecommendedPosts']);

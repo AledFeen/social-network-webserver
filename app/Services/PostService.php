@@ -45,10 +45,8 @@ class PostService implements MustHaveLocation
             return null;
         }
 
-        if($post) {
-            if ($post->repost_id !== null) {
-                $post->main_post = $this->getMainPost($post->repost_id);
-            }
+        if ($post->repost_id !== null) {
+            $post->main_post = $this->getMainPost($post->repost_id);
         }
 
         return new PostDTO(
@@ -72,7 +70,7 @@ class PostService implements MustHaveLocation
     {
         $blockedByIds = $this->blockedBy();
 
-        $paginatedPosts = Post::whereHas('tags', function($query) use ($request) {
+        $paginatedPosts = Post::whereHas('tags', function ($query) use ($request) {
             $query->where('name', $request['tag']);
         })
             ->whereNotIn('user_id', $blockedByIds)
@@ -97,14 +95,15 @@ class PostService implements MustHaveLocation
         );
     }
 
-    public function getRecommendationPosts (array $request): PaginatedResponse{
+    public function getRecommendationPosts(array $request): PaginatedResponse
+    {
         $likedTags = PreferredTag::where('user_id', Auth::id())->pluck('tag');
         $followedUserIds = Subscription::where('follower_id', Auth::id())->pluck('user_id');
         $likedPosts = PostLike::whereIn('user_id', $followedUserIds)->pluck('post_id');
         $blockedByIds = $this->blockedBy();
 
         $paginatedPosts = Post::where(function ($query) use ($likedTags, $likedPosts, $blockedByIds) {
-            $query->whereHas('tags', function($query) use ($likedTags) {
+            $query->whereHas('tags', function ($query) use ($likedTags) {
                 $query->whereIn('name', $likedTags);
             })
                 ->orWhereIn('id', $likedPosts);
@@ -133,7 +132,8 @@ class PostService implements MustHaveLocation
         );
     }
 
-    public function getFeedPosts(array $request): PaginatedResponse {
+    public function getFeedPosts(array $request): PaginatedResponse
+    {
         $followingUserIds = Subscription::where('follower_id', Auth::id())
             ->pluck('user_id')
             ->toArray();
@@ -220,7 +220,7 @@ class PostService implements MustHaveLocation
     {
         $post = Post::where('id', $request['post_id'])->first();
 
-        if($post->user_id == Auth::id()) {
+        if ($post->user_id == Auth::id()) {
             $comments = Comment::where('post_id', $request['post_id'])
                 ->with('files')
                 ->get();
@@ -254,7 +254,7 @@ class PostService implements MustHaveLocation
                     $tags->delete();
                 }
 
-                if($request['tags']) {
+                if ($request['tags']) {
                     $this->checkTagExistence($request['tags']);
                     foreach ($request['tags'] as $tag) {
                         PostTag::create([
@@ -284,7 +284,7 @@ class PostService implements MustHaveLocation
 
             $files = $post->files()->get();
 
-            if($request['text'] !== null) {
+            if ($request['text'] !== null) {
                 $updated = $post->update([
                     'text' => $request['text']
                 ]);
@@ -388,7 +388,8 @@ class PostService implements MustHaveLocation
     }
 
 
-    protected  function getPostsWithMainPosts($paginatedPosts) {
+    protected function getPostsWithMainPosts($paginatedPosts)
+    {
         return $paginatedPosts->getCollection()->map(function ($post) {
             if ($post->repost_id !== null) {
                 $post->main_post = $this->getMainPost($post->repost_id);
