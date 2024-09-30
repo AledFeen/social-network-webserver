@@ -103,12 +103,12 @@ class CommentService
                     return true;
                 }
                 return false;
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 DB::rollBack();
                 if ($files) {
                     $this->clearStorage($images);
                 }
-                logger($e);
+                report($e);
                 return false;
             }
         } else return false;

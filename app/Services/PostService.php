@@ -344,9 +344,9 @@ class PostService implements MustHaveLocation
 
     public function create(array $request): bool
     {
-        if ($request['text'] || $request['files']) {
+        $files = $request['files'];
+        if ($request['text'] || $files) {
             DB::beginTransaction();
-            $files = $request['files'];
             $images = [];
             $videos = [];
             try {
@@ -371,17 +371,16 @@ class PostService implements MustHaveLocation
                             } else $videos[] = $this->addVideo($file, $createdPost->id);
                         }
                     }
-
                     DB::commit();
                     return true;
                 }
                 return false;
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 DB::rollBack();
                 if ($files) {
                     $this->clearStorage($images, $videos);
                 }
-                logger($e);
+                report($e);
                 return false;
             }
         } else return false;
@@ -494,23 +493,23 @@ class PostService implements MustHaveLocation
     protected function addImage($file, int $postId): string
     {
         $fileName = basename(Storage::put('/private/images/posts', $file));
-        PostFile::create([
+        $file = PostFile::create([
             'post_id' => $postId,
             'type' => 'image',
             'filename' => $fileName,
         ]);
-        return $fileName;
+        return $file->filename;
     }
 
     protected function addVideo($file, int $postId): string
     {
         $fileName = basename(Storage::put('/private/videos/posts', $file));
-        PostFile::create([
+        $file = PostFile::create([
             'post_id' => $postId,
             'type' => 'video',
             'filename' => $fileName,
         ]);
-        return $fileName;
+        return $file->filename;
     }
 
     protected function deleteImage($name): void

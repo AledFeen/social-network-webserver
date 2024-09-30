@@ -86,9 +86,8 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::get('/notification/reposts', [\App\Http\Controllers\NotificationController::class, 'getReposts']);
 
     Route::group(['middleware' => ['can_message']], function () {
-        Route::get('can-message-middleware', function () {
-            return response()->json(['success' => true]);
-        });
+        Route::post('/personal-chat', [\App\Http\Controllers\ChatController::class, 'createPersonalChat']);
     });
+    Route::post('/send-message', [\App\Http\Controllers\ChatController::class, 'sendMessage']);
 
 });
