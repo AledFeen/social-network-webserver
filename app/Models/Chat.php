@@ -16,4 +16,9 @@ class Chat extends Model
     {
         return $this->belongsToMany(User::class, 'user_chat_links', 'chat_id', 'user_id');
     }
+
+    public function userChatLinks()
+    {
+        return $this->hasMany(UserChatLink::class, 'chat_id');
+    }
 }

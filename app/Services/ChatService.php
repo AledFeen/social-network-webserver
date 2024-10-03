@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Models\Chat;
+use App\Models\dto\LastMessageDTO;
+use App\Models\dto\PreviewPersonalChatDTO;
+use App\Models\dto\UserDTO;
 use App\Models\Message;
 use App\Models\MessageFile;
 use App\Models\UserChatLink;
@@ -12,6 +15,129 @@ use Illuminate\Support\Facades\Storage;
 
 class ChatService
 {
+    public function getChats()
+    {
+        $userId = Auth::id();
+
+        $chats = Chat::whereHas('userChatLinks', function ($query) use ($userId) {
+            $query->where('user_id', $userId);
+        })
+            ->with(['users' => function ($query) use ($userId) {
+                $query->where('users.id', '!=', $userId)
+                ->with('account');
+            }])
+            ->with('userChatLinks')
+            ->get();
+
+        return $this->getChatsDTOs($chats);
+    }
+
+    protected function getChatsDTOs($chats) {
+        return $chats->map(function ($chat) {
+            if($chat->type == 'personal') {
+                return new PreviewPersonalChatDTO(
+                  $chat->id,
+                  $chat->type,
+                  $this->getPersonalUserDto($chat),
+                  $this->countNewMessages($chat),
+                  $this->getLastMessageDTO($this->getLastMessage($chat))
+                );
+            } else return null;
+        });
+    }
+
+    protected function getPersonalUserDto($chat): UserDTO
+    {
+        $user = $chat->users->first();
+        return new UserDTO(
+            $user->id,
+            $user->name,
+            $user->account->image
+        );
+    }
+
+    protected function getLastMessageDTO($message): ?LastMessageDTO
+    {
+        if($message) {
+            return new LastMessageDTO(
+                $message->id,
+                $message->link_id,
+                $message->is_read,
+                $message->created_at,
+                $message->updated_at,
+                new UserDTO(
+                    $message->link->user->id,
+                    $message->link->user->name,
+                    $message->link->user->account->image
+                )
+            );
+        } else return null;
+    }
+
+    protected function getLastMessage($chat)
+    {
+        $latestMessage = null;
+
+        if (!$chat || !$chat->userChatLinks) {
+            return 0;
+        }
+        foreach ($chat->userChatLinks as $link) {
+            if($latestMessage == null) {
+                $latestMessage = Message::where('link_id', $link->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+            } else {
+                $message = Message::where('link_id', $link->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+                if($message->created_at > $latestMessage->created_at) {
+                    $latestMessage = $message;
+                }
+            }
+        }
+
+        return Message::where('id', $latestMessage->id)
+            ->with('link.user.account')
+            ->first();
+    }
+
+    protected function countNewMessages($chat)
+    {
+
+        if (!$chat || !$chat->userChatLinks) {
+            return 0;
+        }
+
+        $countList = [];
+        foreach ($chat->userChatLinks as $link) {
+            if($link->user_id != Auth::id()) {
+                $unreadCount = Message::where('link_id', $link->id)
+                    ->where('is_read', false)
+                    ->count();
+
+                $countList[] = $unreadCount;
+            }
+        }
+
+        $sum = 0;
+
+        foreach ($countList as $value) {
+            $sum += $value;
+        }
+
+        return $sum;
+    }
+
+    public function getChat(array $request)
+    {
+
+    }
+
+    public function getMessages(array $request)
+    {
+
+    }
+
     public function sendMessage(array $request): bool
     {
         if($request['files']) {
@@ -51,7 +177,7 @@ class ChatService
                                 break;
 
                             default:
-                                $reserveFiles[] = $this->addFile($file, $createdMessage->id);
+                                $reserveFiles[] = $this->addDocument($file, $createdMessage->id);
                                 break;
                         }
                     }
@@ -67,6 +193,40 @@ class ChatService
                 report($e);
                 return false;
             }
+        } else return false;
+    }
+
+    public function updateTextMessage(array $request): bool
+    {
+        $message = Message::where('id', $request['message_id'])->first();
+
+        $link = UserChatLink::where('id', $message->link_id)->first();
+
+        if($link->user_id == Auth::id()) {
+            Message::where('id', $request['message_id'])->update([
+                'text' => $request['text']
+            ]);
+            return true;
+        }
+        return false;
+    }
+
+    public function deleteMessage(array $request): bool
+    {
+        $message = Message::where('id', $request['message_id'])->first();
+
+        $link = UserChatLink::where('id', $message->link_id)->first();
+
+        if($link->user_id == Auth::id()) {
+            $messageFiles = MessageFile::where('message_id', $request['message_id'])->get();
+
+            $message = Message::where('id', $request['message_id'])->delete();
+
+            if($message && $messageFiles) {
+                $this->deleteMessageFiles($messageFiles);
+            }
+
+            return (bool)$message;
         } else return false;
     }
 
@@ -105,6 +265,29 @@ class ChatService
         }
     }
 
+    public function deletePersonalChat(array $request): bool
+    {
+        $links = UserChatLink::where('chat_id', $request['chat_id'])->get();
+
+        $isCorrectUser = false;
+
+        foreach($links as $link)
+        {
+            if($link->user_id == Auth::id()) { $isCorrectUser = true; }
+        }
+
+        if($isCorrectUser) {
+            foreach ($links as $link) {
+                $messages = Message::where('link_id', $link->id)->get();
+                foreach ($messages as $message) {
+                    $messageFiles = MessageFile::where('message_id', $message->id)->get();
+                    $this->deleteMessageFiles($messageFiles);
+                }
+            }
+            return (bool)Chat::where('id', $request['chat_id'])->delete();
+        } else return false;
+    }
+
     protected function checkPersonalChatExist(int $firstUser, int $secondUser): bool
     {
         $firstUserChats = UserChatLink::where('user_id', $firstUser)->pluck('chat_id');
@@ -114,7 +297,7 @@ class ChatService
             ->first();
     }
 
-    protected function addFile($file, int $messageId): string
+    protected function addDocument($file, int $messageId): string
     {
         $fileName = basename(Storage::put('/private/files/messages', $file));
         MessageFile::create([
@@ -158,6 +341,29 @@ class ChatService
         return $fileName;
     }
 
+    protected function deleteMessageFiles(\Illuminate\Database\Eloquent\Collection $files): void
+    {
+        foreach ($files as $file) {
+            switch ($file->type) {
+                case 'photo':
+                    $this->deleteImage($file->filename);
+                    break;
+
+                case 'video':
+                    $this->deleteVideo($file->filename);
+                    break;
+
+                case 'audio':
+                    $this->deleteAudio($file->filename);
+                    break;
+
+                default:
+                    $this->deleteFile($file->filename);
+                    break;
+            }
+        }
+    }
+
     protected function clearStorage(array $images, array $videos, array $audios, array $files): void
     {
         foreach ($images as $image) {
@@ -174,17 +380,6 @@ class ChatService
 
         foreach ($files as $file) {
             $this->deleteFile($file);
-        }
-    }
-
-    protected function deleteMessageFiles(\Illuminate\Database\Eloquent\Collection $files): void
-    {
-        foreach ($files as $file) {
-            if ($file->type == 'image') {
-                $this->deleteImage($file->filename);
-            } else {
-                $this->deleteVideo($file->filename);
-            }
         }
     }
 

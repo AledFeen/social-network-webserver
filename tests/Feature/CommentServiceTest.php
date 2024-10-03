@@ -252,6 +252,7 @@ class CommentServiceTest extends TestCase
         $this->deleteCommentFiles($comments->files);
     }
 
+
     public function test_leave_comment_nullable_files(): void
     {
         $user = User::factory()->create();
@@ -408,7 +409,7 @@ class CommentServiceTest extends TestCase
     protected function deleteCommentFiles(\Illuminate\Database\Eloquent\Collection $images): void
     {
         foreach ($images as $image) {
-            $this->deleteCommentImage($image);
+            $this->deleteCommentImage($image->filename);
         }
     }
 

@@ -20,7 +20,7 @@ class MessageFileFactory extends Factory
     {
         return [
             'message_id' => Message::factory(),
-            'type' => fake()->randomElement(['image', 'video', 'audio', 'document']),
+            'type' => fake()->randomElement(['photo', 'video', 'audio', 'document']),
             'filename' => substr(fake()->text(), 0, 255),
         ];
     }
