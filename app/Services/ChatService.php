@@ -9,12 +9,18 @@ use App\Models\dto\UserDTO;
 use App\Models\Message;
 use App\Models\MessageFile;
 use App\Models\UserChatLink;
+use App\Services\Paginate\PaginatedResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ChatService
 {
+    public function getChat(array $request)
+    {
+
+    }
+
     public function getMessages(array $request)
     {
         $links = UserChatLink::where('chat_id', $request['chat_id'])->pluck('user_id');
@@ -22,8 +28,15 @@ class ChatService
             $links = UserChatLink::where('chat_id', $request['chat_id'])->pluck('id');
             $messages = Message::whereIn('link_id', $links)
                 ->with('files')
-                ->get();
-            return $messages;
+                ->orderBy('created_at','desc')
+                ->paginate(15, ['*'], 'page', $request['page_id']);
+
+            return new PaginatedResponse(
+                $messages,
+                $messages->currentPage(),
+                $messages->lastPage(),
+                $messages->total()
+            );
         } else return null;
     }
 
@@ -156,11 +169,6 @@ class ChatService
         }
 
         return $sum;
-    }
-
-    public function getChat(array $request)
-    {
-
     }
 
     public function sendMessage(array $request): bool

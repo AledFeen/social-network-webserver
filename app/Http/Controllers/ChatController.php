@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Chat\CreatePersonalChatRequest;
 use App\Http\Requests\Chat\DeleteMessageRequest;
 use App\Http\Requests\Chat\DeletePersonalChatRequest;
+use App\Http\Requests\Chat\GetMessagesRequest;
 use App\Http\Requests\Chat\SendMessageRequest;
 use App\Http\Requests\Chat\UpdateMessageRequest;
+use App\Http\Resources\Messages\MessageResource;
+use App\Http\Resources\Messages\PaginatedMessagesResource;
 use App\Http\Resources\PreviewChatDTO\PreviewChatDTOResource;
 use App\Services\ChatService;
 use Illuminate\Http\JsonResponse;
@@ -17,6 +20,15 @@ class ChatController extends Controller
     public function __construct(ChatService $service)
     {
         $this->service = $service;
+    }
+
+    public function getMessages(GetMessagesRequest $request)
+    {
+        $request = $request->validated();
+
+        $result = $this->service->getMessages($request);
+
+        return new PaginatedMessagesResource($result);
     }
 
     public function sendMessage(SendMessageRequest $request): JsonResponse

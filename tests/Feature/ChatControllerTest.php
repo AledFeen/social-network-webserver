@@ -193,6 +193,129 @@ class ChatControllerTest extends TestCase
         //dump($response->json());
     }
 
+    public function test_get_messages()
+    {
+        $user = User::factory([
+            'name' => 'authuser'
+        ])->create();
+
+        $user1 = User::factory()->create();
+        $chat = Chat::factory()->create([
+            'type' => 'personal'
+        ]);
+
+        $link = UserChatLink::factory()->create([
+            'chat_id' => $chat->id,
+            'user_id' => $user->id
+        ]);
+
+        $link1 = UserChatLink::factory()->create([
+            'chat_id' => $chat->id,
+            'user_id' => $user1->id
+        ]);
+
+        $message = Message::factory()->create([
+            'link_id' => $link1->id,
+            'created_at' => now()->subMinutes(10),
+            'updated_at' => now()->subMinutes(5),
+        ]);
+
+        $message1 = Message::factory()->create([
+            'link_id' => $link->id,
+            'created_at' => now()->subMinutes(8),
+            'updated_at' => now()->subMinutes(3),
+        ]);
+
+        $message2 = Message::factory()->create([
+            'link_id' => $link1->id,
+            'text' => 'merci',
+            'created_at' => now()->subMinutes(5),
+            'updated_at' => now()->subMinutes(2),
+        ]);
+
+        $messageFile = MessageFile::factory()->create([
+            'message_id' => $message->id,
+            'type' => 'audio',
+            'name' => 'audio.mp3'
+        ]);
+
+        $messageFile1 = MessageFile::factory()->create([
+            'message_id' => $message->id,
+            'type' => 'document',
+            'name' => 'text.txt'
+        ]);
+
+        $messageFile2 = MessageFile::factory()->create([
+            'message_id' => $message1->id,
+            'type' => 'photo',
+            'name' => 'image.png'
+        ]);
+
+        $expectedData = [
+            [
+                "id" => $message2->id,
+                "link_id" => $message2->link_id,
+                "is_read" => false,
+                "text" => $message2->text,
+                "created_at" => $message2->created_at,
+                "updated_at" => $message2->updated_at,
+                "files" => []
+            ],
+            [
+                "id" => $message1->id,
+                "link_id" => $message1->link_id,
+                "is_read" => false,
+                "text" => $message1->text,
+                "created_at" => $message1->created_at,
+                "updated_at" => $message1->updated_at,
+                "files" => [
+                    [
+                        "id" => $messageFile2->id,
+                        "message_id" => $messageFile2->message_id,
+                        "type" => $messageFile2->type,
+                        "filename" => $messageFile2->filename,
+                        "name" => $messageFile2->name
+                    ]
+                ]
+            ],
+            [
+                "id" => $message->id,
+                "link_id" => $message->link_id,
+                "is_read" => false,
+                "text" => $message->text,
+                "created_at" => $message->created_at,
+                "updated_at" => $message->updated_at,
+                "files" => [
+                    [
+                        "id" => $messageFile->id,
+                        "message_id" => $messageFile->message_id,
+                        "type" => $messageFile->type,
+                        "filename" => $messageFile->filename,
+                        "name" => $messageFile->name
+                    ],
+                    [
+                        "id" => $messageFile1->id,
+                        "message_id" => $messageFile1->message_id,
+                        "type" => $messageFile1->type,
+                        "filename" => $messageFile1->filename,
+                        "name" => $messageFile1->name
+                    ],
+
+                ]
+            ],
+
+        ];
+
+        $this->actingAs($user)->get("/api/messages?chat_id={$chat->id}&page_id=1")
+            ->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 3])
+            ->assertJsonFragment($expectedData[0])
+            ->assertJsonFragment($expectedData[1])
+            ->assertJsonFragment($expectedData[2]);
+    }
+
     public function test_send_message_only_text(): void
     {
         $user = User::factory()->create();
