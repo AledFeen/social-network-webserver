@@ -38,8 +38,8 @@ class ChatControllerTest extends TestCase
             'type' => 'personal'
         ]);
         UserChatLink::factory()->create([
-           'chat_id' => $chat->id,
-           'user_id' => $user->id
+            'chat_id' => $chat->id,
+            'user_id' => $user->id
         ]);
         UserChatLink::factory()->create([
             'chat_id' => $chat->id,
@@ -48,7 +48,7 @@ class ChatControllerTest extends TestCase
 
         $response = $this->actingAs($user)->post('/api/personal-chat', ['user_id' => $user1->id]);
         $response->assertStatus(400)
-            ->assertJson(['success' => false]);;
+            ->assertJson(['success' => false]);
     }
 
     public function test_get_chats()
@@ -85,9 +85,9 @@ class ChatControllerTest extends TestCase
             'updated_at' => now()->subMinutes(3),
         ]);
 
-        Message::factory()->create([
+        $message = Message::factory()->create([
             'link_id' => $link1->id,
-            'text' => 'curwa',
+            'text' => 'merci',
             'created_at' => now()->subMinutes(5),
             'updated_at' => now()->subMinutes(2),
         ]);
@@ -113,15 +113,84 @@ class ChatControllerTest extends TestCase
             'updated_at' => now()->subMinutes(3),
         ]);
 
-        Message::factory()->create([
+        $message1 = Message::factory()->create([
             'link_id' => $link3->id,
+            'text' => null,
             'created_at' => now()->subMinutes(5),
             'updated_at' => now()->subMinutes(2),
         ]);
 
+        $messageFile = MessageFile::factory()->create([
+            'message_id' => $message1->id,
+            'type' => 'audio',
+            'name' => 'audio.mp3'
+        ]);
+
+        MessageFile::factory()->create([
+            'message_id' => $message1->id,
+            'type' => 'document'
+        ]);
+
+        MessageFile::factory()->create([
+            'message_id' => $message1->id,
+            'type' => 'photo'
+        ]);
+
+        $expectedData = [
+            [
+                'id' => $chat->id,
+                'type' => $chat->type,
+                'user' => [
+                    'id' => $user1->id,
+                    'name' => $user1->name,
+                    'image' => 'default_avatar'
+                ],
+                'count_unread' => 2,
+                'last_message' => [
+                    "id" => $message->id,
+                    "link_id" => $message->link_id,
+                    "is_read" => false,
+                    "text" => $message->text,
+                    "created_at" => $message->created_at,
+                    "updated_at" => $message->updated_at,
+                    'user' => [
+                        'id' => $user1->id,
+                        'name' => $user1->name,
+                        'image' => 'default_avatar'
+                    ]
+                ]
+            ],
+            [
+                'id' => $chat1->id,
+                'type' => $chat1->type,
+                'user' => [
+                    'id' => $user2->id,
+                    'name' => $user2->name,
+                    'image' => 'default_avatar'
+                ],
+                'count_unread' => 1,
+                'last_message' => [
+                    "id" => $message1->id,
+                    "link_id" => $message1->link_id,
+                    "is_read" => false,
+                    "text" => $messageFile->name . '|2',
+                    "created_at" => $message1->created_at,
+                    "updated_at" => $message1->updated_at,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'image' => 'default_avatar'
+                    ]
+                ]
+            ]
+        ];
+
         $response = $this->actingAs($user)->get('/api/chats');
-        $response->assertStatus(200);
-        dump($response->json());
+        $response->assertStatus(200)
+            ->assertJsonFragment($expectedData[0])
+            ->assertJsonFragment($expectedData[1]);
+
+        //dump($response->json());
     }
 
     public function test_send_message_only_text(): void
@@ -165,7 +234,6 @@ class ChatControllerTest extends TestCase
             'chat_id' => $chat->id,
             'user_id' => $user1->id
         ]);
-
 
         $imageFile = \Illuminate\Http\UploadedFile::fake()->image('test-image.jpg');
         $videoFile = \Illuminate\Http\UploadedFile::fake()->create('test-video.mp4', 10000);
@@ -254,11 +322,11 @@ class ChatControllerTest extends TestCase
         ]);
 
         MessageFile::factory()->create([
-           'message_id' => $message -> id
+            'message_id' => $message->id
         ]);
 
         MessageFile::factory()->create([
-            'message_id' => $message -> id
+            'message_id' => $message->id
         ]);
 
         $response = $this->actingAs($user1)->delete('/api/message', [

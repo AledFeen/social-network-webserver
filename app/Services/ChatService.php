@@ -15,7 +15,19 @@ use Illuminate\Support\Facades\Storage;
 
 class ChatService
 {
-    public function getChats()
+    public function getMessages(array $request)
+    {
+        $links = UserChatLink::where('chat_id', $request['chat_id'])->pluck('user_id');
+        if($links->contains(Auth::id())) {
+            $links = UserChatLink::where('chat_id', $request['chat_id'])->pluck('id');
+            $messages = Message::whereIn('link_id', $links)
+                ->with('files')
+                ->get();
+            return $messages;
+        } else return null;
+    }
+
+    public function getPersonalChats()
     {
         $userId = Auth::id();
 
@@ -29,10 +41,10 @@ class ChatService
             ->with('userChatLinks')
             ->get();
 
-        return $this->getChatsDTOs($chats);
+        return $this->getPersonalChatsDTOs($chats);
     }
 
-    protected function getChatsDTOs($chats) {
+    protected function getPersonalChatsDTOs($chats) {
         return $chats->map(function ($chat) {
             if($chat->type == 'personal') {
                 return new PreviewPersonalChatDTO(
@@ -59,10 +71,18 @@ class ChatService
     protected function getLastMessageDTO($message): ?LastMessageDTO
     {
         if($message) {
+
+            if($message->text != null) {
+                $text = $message->text;
+            } else {
+                $text = $this->getLastMessageFileName($message->id);
+            }
+
             return new LastMessageDTO(
                 $message->id,
                 $message->link_id,
                 $message->is_read,
+                $text,
                 $message->created_at,
                 $message->updated_at,
                 new UserDTO(
@@ -72,6 +92,16 @@ class ChatService
                 )
             );
         } else return null;
+    }
+
+    protected function getLastMessageFileName($messageId): string {
+        $files = MessageFile::where('message_id', $messageId)->orderBy('type')->get();
+        if($files->count() > 1) {
+            $count = $files->count() - 1;
+            return $files->first()->name . "|$count";
+        } else {
+            return $files->first()->name;
+        }
     }
 
     protected function getLastMessage($chat)
@@ -129,11 +159,6 @@ class ChatService
     }
 
     public function getChat(array $request)
-    {
-
-    }
-
-    public function getMessages(array $request)
     {
 
     }
@@ -299,44 +324,52 @@ class ChatService
 
     protected function addDocument($file, int $messageId): string
     {
+        $originalFileName = $file->getClientOriginalName();
         $fileName = basename(Storage::put('/private/files/messages', $file));
         MessageFile::create([
             'message_id' => $messageId,
             'type' => 'document',
             'filename' => $fileName,
+            'name' => $originalFileName
         ]);
         return $fileName;
     }
 
     protected function addAudio($file, int $messageId): string
     {
+        $originalFileName = $file->getClientOriginalName();
         $fileName = basename(Storage::put('/private/audios/messages', $file));
         MessageFile::create([
             'message_id' => $messageId,
             'type' => 'audio',
             'filename' => $fileName,
+            'name' => $originalFileName
         ]);
         return $fileName;
     }
 
     protected function addImage($file, int $messageId): string
     {
+        $originalFileName = $file->getClientOriginalName();
         $fileName = basename(Storage::put('/private/images/messages', $file));
         MessageFile::create([
             'message_id' => $messageId,
             'type' => 'photo',
             'filename' => $fileName,
+            'name' => $originalFileName
         ]);
         return $fileName;
     }
 
     protected function addVideo($file, int $messageId): string
     {
+        $originalFileName = $file->getClientOriginalName();
         $fileName = basename(Storage::put('/private/videos/messages', $file));
         MessageFile::create([
             'message_id' => $messageId,
             'type' => 'video',
             'filename' => $fileName,
+            'name' => $originalFileName
         ]);
         return $fileName;
     }

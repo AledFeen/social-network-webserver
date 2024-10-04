@@ -19,6 +19,7 @@ class LastMessageDTOResource extends JsonResource
             'id' => $this->getId(),
             'link_id' => $this->getLinkId(),
             'is_read' => $this->getIsRead(),
+            'text' => $this->getText(),
             'created_at' => $this->getCreatedAt(),
             'updated_at' => $this->getUpdatedAt(),
             'user' => new UserDTOResource($this->getUser()),

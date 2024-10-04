@@ -22,6 +22,8 @@ class MessageFileFactory extends Factory
             'message_id' => Message::factory(),
             'type' => fake()->randomElement(['photo', 'video', 'audio', 'document']),
             'filename' => substr(fake()->text(), 0, 255),
+            'name' => substr(fake()->text(),  0, 12) . fake()->randomElement(
+                    ['.png', '.mp4', '.mp3', '.txt']),
         ];
     }
 }

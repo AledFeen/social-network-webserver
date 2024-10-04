@@ -12,6 +12,7 @@ class LastMessageDTO
     protected int $id;
     protected int $link_id;
     protected bool $is_read;
+    protected string $text;
     protected ?Carbon $createdAt;
     protected ?Carbon $updatedAt;
     protected UserDTO $user;
@@ -20,15 +21,17 @@ class LastMessageDTO
      * @param int $id
      * @param int $link_id
      * @param bool $is_read
+     * @param string $text
      * @param Carbon|null $createdAt
      * @param Carbon|null $updatedAt
      * @param UserDTO $user
      */
-    public function __construct(int $id, int $link_id, bool $is_read, ?Carbon $createdAt, ?Carbon $updatedAt, UserDTO $user)
+    public function __construct(int $id, int $link_id, bool $is_read, string $text, ?Carbon $createdAt, ?Carbon $updatedAt, UserDTO $user)
     {
         $this->id = $id;
         $this->link_id = $link_id;
         $this->is_read = $is_read;
+        $this->text = $text;
         $this->createdAt = $createdAt;
         $this->updatedAt = $updatedAt;
         $this->user = $user;
@@ -62,5 +65,10 @@ class LastMessageDTO
     public function getUser(): UserDTO
     {
         return $this->user;
+    }
+
+    public function getText(): string
+    {
+        return $this->text;
     }
 }

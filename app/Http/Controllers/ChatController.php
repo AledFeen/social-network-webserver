@@ -48,7 +48,7 @@ class ChatController extends Controller
 
     public function getChats()
     {
-        $result = $this->service->getChats();
+        $result = $this->service->getPersonalChats();
 
         return PreviewChatDTOResource::collection($result);
     }
