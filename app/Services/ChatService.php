@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Chat;
+use App\Models\dto\ChatUserDTO;
 use App\Models\dto\LastMessageDTO;
 use App\Models\dto\PreviewPersonalChatDTO;
 use App\Models\dto\UserDTO;
@@ -16,19 +17,40 @@ use Illuminate\Support\Facades\Storage;
 
 class ChatService
 {
-    public function getChat(array $request)
+    public function getChatUsers(array $request)
     {
+        $links = UserChatLink::where('chat_id', $request['chat_id'])->pluck('user_id');
+        if ($links->contains(Auth::id())) {
+            $links = UserChatLink::where('chat_id', $request['chat_id'])
+                ->with('user.account')
+                ->get();
 
+            return $this->getChatUsersDTOs($links);
+        } else return null;
+    }
+
+    protected function getChatUsersDTOs($links)
+    {
+        return $links->map(function ($link) {
+            return new ChatUserDTO(
+                $link->id,
+                new UserDTO(
+                    $link->user->id,
+                    $link->user->name,
+                    $link->user->account->image
+                )
+            );
+        });
     }
 
     public function getMessages(array $request)
     {
         $links = UserChatLink::where('chat_id', $request['chat_id'])->pluck('user_id');
-        if($links->contains(Auth::id())) {
+        if ($links->contains(Auth::id())) {
             $links = UserChatLink::where('chat_id', $request['chat_id'])->pluck('id');
             $messages = Message::whereIn('link_id', $links)
                 ->with('files')
-                ->orderBy('created_at','desc')
+                ->orderBy('created_at', 'desc')
                 ->paginate(15, ['*'], 'page', $request['page_id']);
 
             return new PaginatedResponse(
@@ -49,7 +71,7 @@ class ChatService
         })
             ->with(['users' => function ($query) use ($userId) {
                 $query->where('users.id', '!=', $userId)
-                ->with('account');
+                    ->with('account');
             }])
             ->with('userChatLinks')
             ->get();
@@ -57,15 +79,16 @@ class ChatService
         return $this->getPersonalChatsDTOs($chats);
     }
 
-    protected function getPersonalChatsDTOs($chats) {
+    protected function getPersonalChatsDTOs($chats)
+    {
         return $chats->map(function ($chat) {
-            if($chat->type == 'personal') {
+            if ($chat->type == 'personal') {
                 return new PreviewPersonalChatDTO(
-                  $chat->id,
-                  $chat->type,
-                  $this->getPersonalUserDto($chat),
-                  $this->countNewMessages($chat),
-                  $this->getLastMessageDTO($this->getLastMessage($chat))
+                    $chat->id,
+                    $chat->type,
+                    $this->getPersonalUserDto($chat),
+                    $this->countNewMessages($chat),
+                    $this->getLastMessageDTO($this->getLastMessage($chat))
                 );
             } else return null;
         });
@@ -83,9 +106,9 @@ class ChatService
 
     protected function getLastMessageDTO($message): ?LastMessageDTO
     {
-        if($message) {
+        if ($message) {
 
-            if($message->text != null) {
+            if ($message->text != null) {
                 $text = $message->text;
             } else {
                 $text = $this->getLastMessageFileName($message->id);
@@ -107,9 +130,10 @@ class ChatService
         } else return null;
     }
 
-    protected function getLastMessageFileName($messageId): string {
+    protected function getLastMessageFileName($messageId): string
+    {
         $files = MessageFile::where('message_id', $messageId)->orderBy('type')->get();
-        if($files->count() > 1) {
+        if ($files->count() > 1) {
             $count = $files->count() - 1;
             return $files->first()->name . "|$count";
         } else {
@@ -125,7 +149,7 @@ class ChatService
             return 0;
         }
         foreach ($chat->userChatLinks as $link) {
-            if($latestMessage == null) {
+            if ($latestMessage == null) {
                 $latestMessage = Message::where('link_id', $link->id)
                     ->orderBy('created_at', 'desc')
                     ->first();
@@ -133,7 +157,7 @@ class ChatService
                 $message = Message::where('link_id', $link->id)
                     ->orderBy('created_at', 'desc')
                     ->first();
-                if($message->created_at > $latestMessage->created_at) {
+                if ($message->created_at > $latestMessage->created_at) {
                     $latestMessage = $message;
                 }
             }
@@ -153,7 +177,7 @@ class ChatService
 
         $countList = [];
         foreach ($chat->userChatLinks as $link) {
-            if($link->user_id != Auth::id()) {
+            if ($link->user_id != Auth::id()) {
                 $unreadCount = Message::where('link_id', $link->id)
                     ->where('is_read', false)
                     ->count();
@@ -173,7 +197,7 @@ class ChatService
 
     public function sendMessage(array $request): bool
     {
-        if($request['files']) {
+        if ($request['files']) {
             $files = $request['files'];
         } else $files = [];
 
@@ -217,8 +241,7 @@ class ChatService
                 }
                 DB::commit();
                 return true;
-            }
-            catch (\Throwable $e) {
+            } catch (\Throwable $e) {
                 DB::rollBack();
                 if ($files) {
                     $this->clearStorage($images, $videos, $audios, $reserveFiles);
@@ -235,7 +258,7 @@ class ChatService
 
         $link = UserChatLink::where('id', $message->link_id)->first();
 
-        if($link->user_id == Auth::id()) {
+        if ($link->user_id == Auth::id()) {
             Message::where('id', $request['message_id'])->update([
                 'text' => $request['text']
             ]);
@@ -250,12 +273,12 @@ class ChatService
 
         $link = UserChatLink::where('id', $message->link_id)->first();
 
-        if($link->user_id == Auth::id()) {
+        if ($link->user_id == Auth::id()) {
             $messageFiles = MessageFile::where('message_id', $request['message_id'])->get();
 
             $message = Message::where('id', $request['message_id'])->delete();
 
-            if($message && $messageFiles) {
+            if ($message && $messageFiles) {
                 $this->deleteMessageFiles($messageFiles);
             }
 
@@ -268,7 +291,7 @@ class ChatService
         $firstUser = Auth::id();
         $secondUser = $request['user_id'];
 
-        if(!$this->checkPersonalChatExist($firstUser, $secondUser)) {
+        if (!$this->checkPersonalChatExist($firstUser, $secondUser)) {
             DB::beginTransaction();
             try {
                 $chat = Chat::create([
@@ -287,8 +310,7 @@ class ChatService
 
                 DB::commit();
                 return true;
-            }
-            catch (\Exception $e) {
+            } catch (\Exception $e) {
                 DB::rollBack();
                 logger($e);
                 return false;
@@ -304,12 +326,13 @@ class ChatService
 
         $isCorrectUser = false;
 
-        foreach($links as $link)
-        {
-            if($link->user_id == Auth::id()) { $isCorrectUser = true; }
+        foreach ($links as $link) {
+            if ($link->user_id == Auth::id()) {
+                $isCorrectUser = true;
+            }
         }
 
-        if($isCorrectUser) {
+        if ($isCorrectUser) {
             foreach ($links as $link) {
                 $messages = Message::where('link_id', $link->id)->get();
                 foreach ($messages as $message) {

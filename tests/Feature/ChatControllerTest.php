@@ -193,6 +193,73 @@ class ChatControllerTest extends TestCase
         //dump($response->json());
     }
 
+    public function test_get_chat_users()
+    {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $chat = Chat::factory()->create([
+            'type' => 'personal'
+        ]);
+
+        $link = UserChatLink::factory()->create([
+            'chat_id' => $chat->id,
+            'user_id' => $user->id
+        ]);
+
+        $link1 = UserChatLink::factory()->create([
+            'chat_id' => $chat->id,
+            'user_id' => $user1->id
+        ]);
+
+        $expectedData = [
+            [
+                'id' => $link->id,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'image' => 'default_avatar'
+                ]
+            ],
+            [
+                'id' => $link1->id,
+                'user' => [
+                    'id' => $user1->id,
+                    'name' => $user1->name,
+                    'image' => 'default_avatar'
+                ]
+            ]
+        ];
+
+        $this->actingAs($user)->get("/api/chat-users?chat_id={$chat->id}")
+            ->assertStatus(200)
+            ->assertJsonFragment($expectedData[0])
+            ->assertJsonFragment($expectedData[1]);
+    }
+
+    public function test_get_protected_chat_users()
+    {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $chat = Chat::factory()->create([
+            'type' => 'personal'
+        ]);
+
+        UserChatLink::factory()->create([
+            'chat_id' => $chat->id,
+            'user_id' => $user->id
+        ]);
+
+        UserChatLink::factory()->create([
+            'chat_id' => $chat->id,
+            'user_id' => $user1->id
+        ]);
+
+
+        $this->actingAs($user2)->get("/api/chat-users?chat_id={$chat->id}")
+            ->assertStatus(404);
+    }
+
     public function test_get_messages()
     {
         $user = User::factory([

@@ -88,7 +88,9 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::group(['middleware' => ['can_message']], function () {
         Route::post('/personal-chat', [\App\Http\Controllers\ChatController::class, 'createPersonalChat']);
     });
+
     Route::get('/chats', [\App\Http\Controllers\ChatController::class, 'getChats']);
+    Route::get('/chat-users', [\App\Http\Controllers\ChatController::class, 'getChatUsers']);
     Route::delete('/chat', [\App\Http\Controllers\ChatController::class, 'deletePersonalChat']);
     Route::get('/messages', [\App\Http\Controllers\ChatController::class, 'getMessages']);
     Route::post('/message', [\App\Http\Controllers\ChatController::class, 'sendMessage']);
