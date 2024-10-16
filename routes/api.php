@@ -96,4 +96,10 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::post('/message', [\App\Http\Controllers\ChatController::class, 'sendMessage']);
     Route::put('/message', [\App\Http\Controllers\ChatController::class, 'updateMessageText']);
     Route::delete('/message', [\App\Http\Controllers\ChatController::class, 'deleteMessage']);
+
+    Route::get('/complaint', [\App\Http\Controllers\ComplaintController::class, 'getComplaint']);
+    Route::get('/complaints', [\App\Http\Controllers\ComplaintController::class, 'getComplaints']);
+    Route::post('/complaint', [\App\Http\Controllers\ComplaintController::class, 'createComplaint']);
+    Route::put('/complaint', [\App\Http\Controllers\ComplaintController::class, 'updateComplaint']);
+
 });
