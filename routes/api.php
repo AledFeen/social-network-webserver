@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,8 +15,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::get('/checkAuth', [\App\Http\Controllers\Auth\AuthController::class, 'checkAuth']);
+
+Route::group(['middleware' => ['auth:sanctum']], function () {
+    Route::get('/user', [\App\Http\Controllers\Auth\AuthController::class, 'user']);
 });
 
 Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {

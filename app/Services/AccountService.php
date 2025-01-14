@@ -57,6 +57,10 @@ class AccountService implements MustHaveLocation
         $account = Account::where('user_id', $request['user_id'])
             ->whereNotIn('user_id', $blockedByIds)
             ->with('user.privacy')
+            ->with(['user' => function ($query) {
+                $query->withCount('following')
+                    ->withCount('followers');
+            }])
             ->first();
 
         if(!$account) {
@@ -72,7 +76,9 @@ class AccountService implements MustHaveLocation
             $account->real_name,
             $account->location,
             $account->user->privacy->account_type,
-            $account->user->privacy->who_can_message
+            $account->user->privacy->who_can_message,
+            $account->user->following_count,
+            $account->user->followers_count
         );
     }
 

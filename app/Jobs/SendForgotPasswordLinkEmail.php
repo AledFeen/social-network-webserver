@@ -28,6 +28,6 @@ class SendForgotPasswordLinkEmail implements ShouldQueue
      */
     public function handle(): void
     {
-        Password::broker()->sendResetLink($this->email);
+        Password::sendResetLink($this->email);
     }
 }

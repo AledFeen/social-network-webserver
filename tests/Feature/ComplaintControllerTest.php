@@ -55,12 +55,14 @@ class ComplaintControllerTest extends TestCase
 
         $complaint = Complaint::factory()->create([
             'sender_id' => $user1->id,
-            'post_id' => $post->id
+            'post_id' => $post->id,
+            'created_at' => '2024-10-16',
         ]);
 
         $complaint1 = Complaint::factory()->create([
             'sender_id' => $user1->id,
-            'post_id' => $post->id
+            'post_id' => $post->id,
+            'created_at' => '2024-10-16',
         ]);
 
         $expectedData = [
@@ -80,7 +82,7 @@ class ComplaintControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonFragment($expectedData[0])
             ->assertJsonFragment($expectedData[1]);
-        //dump($response);
+        //dump($response->getContent());
     }
 
     public function test_create_complaint(): void

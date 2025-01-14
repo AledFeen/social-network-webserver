@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Account;
 use App\Models\Location;
 use App\Models\PrivacySettings;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -82,6 +83,10 @@ class AccountControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $user_one = User::factory()->create();
+        Subscription::factory()->create([
+            'user_id' => $user->id,
+            'follower_id' => $user_one->id
+        ]);
 
         $response = $this->actingAs($user)->get("/api/profile?user_id={$user_one->id}");
 
@@ -99,6 +104,8 @@ class AccountControllerTest extends TestCase
                 'location' => $account->location,
                 'accountType' => $privacy->account_type,
                 'whoCanMessage' => $privacy->who_can_message,
+                'countFollowers' => 1,
+                'countFollowings' => 0
             ],
         ];
 

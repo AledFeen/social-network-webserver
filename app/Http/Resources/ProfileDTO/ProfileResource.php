@@ -23,7 +23,9 @@ class ProfileResource extends JsonResource
             'realName' => $this->getRealName(),
             'location' => $this->getLocation(),
             'accountType' => $this->getAccountType(),
-            'whoCanMessage' => $this->getWhoCanMessage()
+            'whoCanMessage' => $this->getWhoCanMessage(),
+            'countFollowers' => $this->getCountFollowers(),
+            'countFollowings' => $this->getCountFollowings()
         ];
     }
 }

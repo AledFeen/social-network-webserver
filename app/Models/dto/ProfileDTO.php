@@ -16,6 +16,8 @@ class ProfileDTO
     protected ?string $location;
     protected string $accountType;
     protected string $whoCanMessage;
+    protected int $countFollowers;
+    protected int $countFollowings;
 
     /**
      * @param int $id
@@ -27,8 +29,10 @@ class ProfileDTO
      * @param string|null $location
      * @param string $accountType
      * @param string $whoCanMessage
+     * @param int $countFollowers
+     * @param int $countFollowings
      */
-    public function __construct(int $id, string $name, string $image, ?Date $birthday, ?string $about, ?string $realName, ?string $location, string $accountType, string $whoCanMessage)
+    public function __construct(int $id, string $name, string $image, ?Date $birthday, ?string $about, ?string $realName, ?string $location, string $accountType, string $whoCanMessage, int $countFollowers, int $countFollowings)
     {
         $this->id = $id;
         $this->name = $name;
@@ -39,6 +43,8 @@ class ProfileDTO
         $this->location = $location;
         $this->accountType = $accountType;
         $this->whoCanMessage = $whoCanMessage;
+        $this->countFollowers = $countFollowers;
+        $this->countFollowings = $countFollowings;
     }
 
     public function getId(): int
@@ -86,5 +92,13 @@ class ProfileDTO
         return $this->whoCanMessage;
     }
 
+    public function getCountFollowers(): int
+    {
+        return $this->countFollowers;
+    }
 
+    public function getCountFollowings(): int
+    {
+        return $this->countFollowings;
+    }
 }
