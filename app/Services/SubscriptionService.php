@@ -15,6 +15,13 @@ use Illuminate\Support\Facades\Auth;
 class SubscriptionService implements MustCheckBlacklist
 {
     use checkingBlacklist;
+    public function checkSubscribe(array $request) {
+        $sub = Subscription::where(['user_id' => $request['user_id'], 'follower_id' => Auth::id()])
+            ->first();
+
+        return (bool)$sub;
+    }
+
     public function subscribe(array $request)
     {
         $user_id = $request['user_id'];
@@ -122,4 +129,6 @@ class SubscriptionService implements MustCheckBlacklist
         $user_id = $request['user_id'];
         return User::find($user_id);
     }
+
+
 }

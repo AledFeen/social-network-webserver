@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\CheckAccountTypeByPostId;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -65,6 +66,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'account_type' => \App\Http\Middleware\CheckAccountType::class,
+        'account_type_post' => CheckAccountTypeByPostId::class,
         'can_comment' => \App\Http\Middleware\CheckCanComment::class,
         'can_repost' => \App\Http\Middleware\CheckCanRepost::class,
         'can_message' => \App\Http\Middleware\CheckCanMessage::class

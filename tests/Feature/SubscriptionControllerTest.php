@@ -15,6 +15,34 @@ class SubscriptionControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_check_subscription_true(): void
+    {
+        $user = User::factory()->create();
+        $user_first = User::factory()->create();
+
+        Subscription::factory()->create([
+            'user_id' => $user_first->id,
+            'follower_id' => $user->id
+        ]);
+
+        $response = $this->actingAs($user)->get("/api/check-subscription?user_id={$user_first->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['success' => true]);
+    }
+
+    public function test_check_subscription_false(): void
+    {
+        $user = User::factory()->create();
+        $user_first = User::factory()->create();
+
+        $response = $this->actingAs($user)->get("/api/check-subscription?user_id={$user_first->id}");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['success' => false]);
+    }
+
+
     public function test_subscribe_user(): void
     {
         $user = User::factory()->create();

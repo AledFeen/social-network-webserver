@@ -7,6 +7,7 @@ use App\Http\Resources\PostDTO\PostFileResource;
 use App\Http\Resources\TagResource;
 use App\Http\Resources\UserDTO\UserDTOResource;
 use App\Models\Account;
+use App\Models\BlockedUser;
 use App\Models\Comment;
 use App\Models\CommentFile;
 use App\Models\Location;
@@ -15,6 +16,7 @@ use App\Models\PostFile;
 use App\Models\PostLike;
 use App\Models\PostTag;
 use App\Models\PreferredTag;
+use App\Models\PrivacySettings;
 use App\Models\Subscription;
 use App\Models\Tag;
 use App\Models\User;
@@ -26,6 +28,35 @@ use Tests\TestCase;
 class PostServiceTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_get_post_private_account(): void
+    {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $location = Location::factory()->create();
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+                'location' => $location->name
+            ]);
+
+        $privacy = PrivacySettings::where('user_id', $user->id)->first();
+        if ($privacy) {
+            $privacy->account_type = 'private';
+            $privacy->save();
+        }
+
+        $response = $this->actingAs($user1)->get("/api/post?post_id={$post->id}");
+        $response->assertStatus(403);
+
+        Subscription::factory([
+            'user_id' => $user->id,
+            'follower_id' => $user1->id
+        ])->create();
+
+        $response = $this->actingAs($user1)->get("/api/post?post_id={$post->id}");
+        $response->assertStatus(200);
+    }
 
     public function test_get_post(): void
     {
@@ -112,6 +143,85 @@ class PostServiceTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonFragment($expectedData);
+    }
+
+    public function test_get_posts_by_tag_with_banned_and_private_accounts()
+    {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $user3 = User::factory()->create();
+
+        BlockedUser::factory([
+            'user_id' => $user1->id,
+            'blocked_id' => $user->id
+        ])->create();
+
+        $privacy = PrivacySettings::where('user_id', $user2->id)->first();
+        $privacy->account_type = 'private';
+        $privacy->save();
+
+        $tag1 = Tag::factory()->create();
+
+        $post1 = Post::factory()
+            ->create([
+                'user_id' => $user1->id
+            ]);
+
+        $post2 = Post::factory()
+            ->create([
+                'user_id' => $user2->id
+            ]);
+
+        $post3 = Post::factory()
+            ->create([
+                'user_id' => $user3->id
+            ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post1->id,
+            'tag' => $tag1->name
+        ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post2->id,
+            'tag' => $tag1->name
+        ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post3->id,
+            'tag' => $tag1->name
+        ]);
+
+        $account = Account::where('user_id', $user3->id)->first();
+
+        $expectedData = [
+            [
+                'id' => $post3->id,
+                'user' => ['id' => $user3->id, 'name' => $user3->name, 'image' => $account->image],
+                'repost_id' => null,
+                'location' => $post3->location,
+                'text' => $post3->text,
+                'created_at' => $post3->created_at,
+                'updated_at' => $post3->updated_at,
+                'repost_count' => 0,
+                'like_count' => 0,
+                'comment_count' => 0,
+                'tags' => [
+                    ['name' => $tag1->name],
+                ],
+                'files' => [],
+                'main_post' => null
+            ],
+        ];
+
+        $response = $this->actingAs($user)->get("/api/posts-by-tag?tag={$tag1->name}&page_id=1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 1])
+            ->assertJsonFragment($expectedData[0]);
     }
 
     public function test_get_posts_by_tag(): void

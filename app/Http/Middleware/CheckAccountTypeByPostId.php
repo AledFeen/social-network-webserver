@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Post;
 use App\Models\PrivacySettings;
 use App\Models\Subscription;
 use App\Services\PrivacySettings\checkingSettings;
@@ -10,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
-class CheckAccountType
+class CheckAccountTypeByPostId
 {
     use checkingSettings;
 
@@ -21,7 +22,8 @@ class CheckAccountType
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user_id = $request->input('user_id');
+        $post_id = $request->input('post_id');
+        $user_id = Post::find($post_id)->user_id;
         $account_type = $this->getSettings($user_id)->account_type;
         if ($account_type === 'public') {
             return $next($request);

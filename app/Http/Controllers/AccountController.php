@@ -6,6 +6,7 @@ use App\Http\Requests\Account\GetAccountRequest;
 use App\Http\Requests\Account\SearchProfileRequest;
 use App\Http\Requests\Account\UpdateAccountRequest;
 use App\Http\Requests\Account\UpdateProfileImageRequest;
+use App\Http\Resources\AccountAvatarResource;
 use App\Http\Resources\AccountResource;
 use App\Http\Resources\ProfileDTO\ProfileResource;
 use App\Http\Resources\UserDTO\PaginatedUserDTOResource;
@@ -39,6 +40,12 @@ class AccountController extends Controller
         $data = $this->service->getMy();
 
         return new AccountResource($data);
+    }
+
+    public function getMyAvatar(): AccountAvatarResource
+    {
+        $data = $this->service->getMy();
+        return new AccountAvatarResource($data);
     }
 
     public function getProfile(GetAccountRequest $request)

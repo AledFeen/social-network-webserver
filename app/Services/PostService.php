@@ -74,6 +74,9 @@ class PostService implements MustHaveLocation
             $query->where('name', $request['tag']);
         })
             ->whereNotIn('user_id', $blockedByIds)
+            ->whereHas('user.privacy', function ($query) {
+                $query->where('account_type', 'public');
+            })
             ->withCount('reposts')
             ->withCount('likes')
             ->withCount('comments')
@@ -109,6 +112,9 @@ class PostService implements MustHaveLocation
                 ->orWhereIn('id', $likedPosts);
         })
             ->whereNotIn('user_id', $blockedByIds)
+            ->whereHas('user.privacy', function ($query) {
+                $query->where('account_type', 'public');
+            })
             ->where('created_at', '>=', now()->subWeeks(2))
             ->withCount('reposts')
             ->withCount('likes')
