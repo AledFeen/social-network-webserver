@@ -33,7 +33,7 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::get('/profile', [\App\Http\Controllers\AccountController::class, 'getProfile']);
     Route::get('/search-profile', [\App\Http\Controllers\AccountController::class, 'getSearchProfiles']);
 
-    Route::get('/check-subscription', [\App\Http\Controllers\SubscriptionController::class, 'checkSubscription']);
+    Route::get('/check-relations', [\App\Http\Controllers\SubscriptionController::class, 'checkRelations']);
 
     Route::group(['middleware' => ['account_type']], function () {
         Route::get('/subscribers', [\App\Http\Controllers\SubscriptionController::class, 'getSubscribers']);
@@ -65,7 +65,6 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::post('/subscribe', [\App\Http\Controllers\SubscriptionController::class, 'subscribeUser']);
     Route::delete('/unsubscribe', [\App\Http\Controllers\SubscriptionController::class, 'unsubscribeUser']);
     Route::delete('/delete-subscriber', [\App\Http\Controllers\SubscriptionController::class, 'deleteSubscriber']);
-
 
     Route::post('subscribe-request', [\App\Http\Controllers\SubscriptionRequestController::class, 'subscribe']);
     Route::post('accept-request', [\App\Http\Controllers\SubscriptionRequestController::class, 'acceptRequest']);

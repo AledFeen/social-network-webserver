@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\BlockedUser;
 use App\Models\dto\UserDTO;
 use App\Models\PrivacySettings;
 use App\Models\Subscription;
@@ -15,11 +16,27 @@ use Illuminate\Support\Facades\Auth;
 class SubscriptionService implements MustCheckBlacklist
 {
     use checkingBlacklist;
-    public function checkSubscribe(array $request) {
-        $sub = Subscription::where(['user_id' => $request['user_id'], 'follower_id' => Auth::id()])
+    public function checkRelations(array $request) {
+        $subscription = Subscription::where(['user_id' => $request['user_id'], 'follower_id' => Auth::id()])
             ->first();
 
-        return (bool)$sub;
+        $subscriber = Subscription::where(['user_id' => Auth::id(), 'follower_id' => $request['user_id']])
+            ->first();
+
+        $req = SubscriptionRequest::where(['user_id' => $request['user_id'], 'follower_id' => Auth::id()])
+            ->first();
+
+        $banned = BlockedUser::where(['user_id' => Auth::id(), 'blocked_id' => $request['user_id']])->first();
+
+        $isBanned = BlockedUser::where(['user_id' => $request['user_id'], 'blocked_id' => Auth::id()])->first();
+
+        return (object)[
+            'subscription' => (bool)$subscription,
+            'subscriber' => (bool)$subscriber,
+            'request' => (bool)$req,
+            'banned' => (bool)$banned,
+            'isBanned' =>  (bool)$isBanned,
+        ];
     }
 
     public function subscribe(array $request)
@@ -83,7 +100,7 @@ class SubscriptionService implements MustCheckBlacklist
         $paginatedFollowers = $user->followers()
             ->whereNotIn('follower_id', $blockedByIds)
             ->with('user.account')
-            ->paginate(15, ['*'], 'page', $request['page_id']);
+            ->paginate(10, ['*'], 'page', $request['page_id']);
 
         $followers = $paginatedFollowers->map(function ($subscription) {
             return new UserDTO(
@@ -110,7 +127,7 @@ class SubscriptionService implements MustCheckBlacklist
         $paginatedFollowings = $user->following()
             ->whereNotIn('user_id', $blockedByIds)
             ->with('user.account')
-            ->paginate(15, ['*'], 'page', $request['page_id']);
+            ->paginate(10, ['*'], 'page', $request['page_id']);
 
         $followings = $paginatedFollowings->map(function ($subscription) {
             return new UserDTO($subscription->user->id, $subscription->user->name, $subscription->user->account->image);

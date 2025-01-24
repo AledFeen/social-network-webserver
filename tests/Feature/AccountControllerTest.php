@@ -88,7 +88,7 @@ class AccountControllerTest extends TestCase
             'follower_id' => $user_one->id
         ]);
 
-        $response = $this->actingAs($user)->get("/api/profile?user_id={$user_one->id}");
+        $response = $this->actingAs($user)->get("/api/profile?username={$user_one->name}");
 
         $account = Account::where('user_id', $user_one->id)->first();
         $privacy = PrivacySettings::where('user_id', $user_one->id)->first();
@@ -104,8 +104,8 @@ class AccountControllerTest extends TestCase
                 'location' => $account->location,
                 'accountType' => $privacy->account_type,
                 'whoCanMessage' => $privacy->who_can_message,
-                'countFollowers' => 1,
-                'countFollowings' => 0
+                'countFollowings' => 1,
+                'countFollowers' => 0
             ],
         ];
 

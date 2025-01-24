@@ -28,11 +28,16 @@ class BlockingService
                 ->where('follower_id', $request['user_id'])
                 ->delete();
 
+            Subscription::where('user_id', $request['user_id'])
+                ->where('follower_id', Auth::id())
+                ->delete();
+
             $created = BlockedUser::create([
                 'user_id' => Auth::id(),
                 'blocked_id' => $request['user_id']
             ]);
 
+            DB::commit();
             return (bool) $created;
         }
         catch (\Exception $e) {

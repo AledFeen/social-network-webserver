@@ -62,12 +62,12 @@ class SubscriptionController extends Controller
         return new PaginatedUserDTOResource($followings);
     }
 
-    public function checkSubscription(SubscriptionRequest $request): JsonResponse
+    public function checkRelations(SubscriptionRequest $request): JsonResponse
     {
         $request = $request->validated();
 
-        $result = $this->service->checkSubscribe($request);
+        $result = $this->service->checkRelations($request);
 
-        return response()->json(['success' => $result]);
+        return response()->json($result);
     }
 }
