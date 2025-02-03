@@ -4,7 +4,7 @@ namespace App\Http\Requests\Post;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePostRequest extends FormRequest
+class GetSearchTagsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,13 +22,7 @@ class CreatePostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'repost_id' => 'nullable|integer',
-            'location' => 'nullable|string|max:64',
-            'text' => 'nullable|string|max:512',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:32',
-            'files' => 'nullable|array',
-            'files.*' => 'file|mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,mkv|max:25600',
+            'search-text' => 'nullable|string'
         ];
     }
 }

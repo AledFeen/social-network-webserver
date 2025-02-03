@@ -10,7 +10,7 @@ class FileController extends Controller implements MustCheckPostFileAccess
 {
     use checkingPostFileAccess;
 
-    protected function getImage($path): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    protected function getFile($path): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
         if (!file_exists($path)) {
             abort(400);
@@ -22,14 +22,24 @@ class FileController extends Controller implements MustCheckPostFileAccess
     public function getAccountImage($filename)
     {
         $path = storage_path('/app/private/images/accounts/' . $filename);
-        return $this->getImage($path);
+        return $this->getFile($path);
     }
 
     public function getPostImage($filename)
     {
         if ($this->checkAccessPostFile($filename)) {
             $path = storage_path('/app/private/images/posts/' . $filename);
-            return $this->getImage($path);
+            return $this->getFile($path);
+        } else {
+            return response()->json(['error' => 'No rights'], 403);
+        }
+    }
+
+    public function getPostVideo($filename)
+    {
+        if ($this->checkAccessPostFile($filename)) {
+            $path = storage_path('/app/private/videos/posts/' . $filename);
+            return $this->getFile($path);
         } else {
             return response()->json(['error' => 'No rights'], 403);
         }

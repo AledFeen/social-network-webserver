@@ -90,4 +90,8 @@ class SubscriptionRequestService
         );
     }
 
+    public function getCount() {
+        return SubscriptionRequest::where('user_id', Auth::id())->count();
+    }
+
 }

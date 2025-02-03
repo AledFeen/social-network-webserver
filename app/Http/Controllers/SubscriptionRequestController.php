@@ -24,7 +24,7 @@ class SubscriptionRequestController extends Controller
         $this->service = $service;
     }
 
-    public function subscribe(SubscribeRequest $request)
+    public function subscribe(SubscribeRequest $request): \Illuminate\Http\JsonResponse
     {
         $request = $request->validated();
 
@@ -33,7 +33,7 @@ class SubscriptionRequestController extends Controller
         return response()->json(['success' => $result], $result ? 201 : 400);
     }
 
-    public function acceptRequest(AcceptSubRequest $request)
+    public function acceptRequest(AcceptSubRequest $request): \Illuminate\Http\JsonResponse
     {
         $request = $request->validated();
 
@@ -42,7 +42,7 @@ class SubscriptionRequestController extends Controller
         return response()->json(['success' => $result], $result ? 201 : 400);
     }
 
-    public function declineRequest(AcceptSubRequest $request)
+    public function declineRequest(AcceptSubRequest $request): \Illuminate\Http\JsonResponse
     {
         $request = $request->validated();
 
@@ -51,10 +51,16 @@ class SubscriptionRequestController extends Controller
         return response()->json(['success' => $result], $result ? 200 : 400);
     }
 
-    public function getRequests(GetSubRequest $request)
+    public function getRequests(GetSubRequest $request): PaginatedSubRequestDTOResource
     {
         $request = $request->validated();
         $data = $this->service->get($request);
         return new PaginatedSubRequestDTOResource($data);
+    }
+
+    public function getRequestCount(): \Illuminate\Http\JsonResponse
+    {
+        $data = $this->service->getCount();
+        return response()->json(['requestCount' => $data]);
     }
 }

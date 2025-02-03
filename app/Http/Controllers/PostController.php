@@ -14,14 +14,17 @@ use App\Http\Requests\Post\GetPostRequest;
 use App\Http\Requests\Post\GetPostsByTagRequest;
 use App\Http\Requests\Post\GetPostsRequest;
 use App\Http\Requests\Post\GetRepostsRequest;
+use App\Http\Requests\Post\GetSearchTagsRequest;
 use App\Http\Requests\Post\Like\GetLikesRequest;
 use App\Http\Requests\Post\Like\LikeRequest;
 use App\Http\Requests\Post\UpdateFilesRequest;
 use App\Http\Requests\Post\UpdateTagsRequest;
 use App\Http\Requests\Post\UpdateTextRequest;
 use App\Http\Resources\CommentDTO\PaginatedCommentDTOResource;
+use App\Http\Resources\LocationResource;
 use App\Http\Resources\PostDTO\PaginatedPostDTOResource;
 use App\Http\Resources\PostDTO\PostDTOResource;
+use App\Http\Resources\TagDtoResource;
 use App\Http\Resources\UserDTO\PaginatedUserDTOResource;
 use App\Services\CommentService;
 use App\Services\LikeService;
@@ -39,6 +42,24 @@ class PostController extends Controller
         $this->postService = $postService;
         $this->commentService = $commentService;
         $this->likeService = $likeService;
+    }
+
+    public function getLocations(GetSearchTagsRequest $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    {
+        $request = $request->validated();
+
+        $result = $this->postService->getLocations($request);
+
+        return LocationResource::collection($result);
+    }
+
+    public function getSearchTags(GetSearchTagsRequest $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    {
+        $request = $request->validated();
+
+        $result = $this->postService->getSearchTags($request);
+
+        return TagDtoResource::collection($result);
     }
 
     public function getPost(GetPostRequest $request)

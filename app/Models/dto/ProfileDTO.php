@@ -10,7 +10,7 @@ class ProfileDTO
     protected int $id;
     protected string $name;
     protected string $image;
-    protected ?Date $birthday;
+    protected ?string $birthday;
     protected ?string $about;
     protected ?string $realName;
     protected ?string $location;
@@ -32,7 +32,7 @@ class ProfileDTO
      * @param int $countFollowers
      * @param int $countFollowings
      */
-    public function __construct(int $id, string $name, string $image, ?Date $birthday, ?string $about, ?string $realName, ?string $location, string $accountType, string $whoCanMessage, int $countFollowers, int $countFollowings)
+    public function __construct(int $id, string $name, string $image, ?string $birthday, ?string $about, ?string $realName, ?string $location, string $accountType, string $whoCanMessage, int $countFollowers, int $countFollowings)
     {
         $this->id = $id;
         $this->name = $name;
@@ -62,7 +62,7 @@ class ProfileDTO
         return $this->image;
     }
 
-    public function getBirthday(): ?Date
+    public function getBirthday(): ?string
     {
         return $this->birthday;
     }

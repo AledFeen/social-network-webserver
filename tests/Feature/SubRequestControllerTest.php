@@ -92,7 +92,7 @@ class SubRequestControllerTest extends TestCase
             'follower_id' => $user_first->id
         ]);
 
-        $response = $this->actingAs($user)->post('/api/decline-request', ['id' => $request->id]);
+        $response = $this->actingAs($user)->delete("/api/decline-request?id={$request->id}");
         $response->assertStatus(200)
             ->assertJson(['success' => true]);
         $this->assertDatabaseEmpty('subscription_requests');
@@ -138,7 +138,38 @@ class SubRequestControllerTest extends TestCase
             ->assertJsonFragment(['total' => 2])
             ->assertJsonFragment($expectedData[0])
             ->assertJsonFragment($expectedData[1]);
+    }
 
+    public function test_get_request_count(): void
+    {
+        $user = User::factory()->create();
+        $user_first = User::factory()->create();
+        $user_second = User::factory()->create();
+
+        SubscriptionRequest::factory()->create([
+            'user_id' => $user->id,
+            'follower_id' => $user_first->id
+        ]);
+
+        SubscriptionRequest::factory()->create([
+            'user_id' => $user->id,
+            'follower_id' => $user_second->id
+        ]);
+
+        $response = $this->actingAs($user)->get("/api/subscription-requests-count");
+
+        $response->assertStatus(200)
+            ->assertJson(['requestCount' => 2]);
+    }
+
+    public function test_get_request_count_nullable(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get("/api/subscription-requests-count");
+
+        $response->assertStatus(200)
+            ->assertJson(['requestCount' => 0]);
     }
 
 }

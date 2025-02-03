@@ -23,6 +23,7 @@ class PostDTO
     protected Collection $files;
 
     protected ?MainPostDTO $mainPost;
+    protected bool $isLiked;
 
     /**
      * @param int $id
@@ -39,12 +40,13 @@ class PostDTO
      * @param Collection $files
      * @param MainPostDTO|null $mainPost
      */
+
     public function __construct(
         int $id, UserDTO $user, ?int $repostId,
         ?string $location, ?string $text,
         ?Carbon $createdAt, ?Carbon $updatedAt,
         int $repostCount, int $likeCount, int $commentCount,
-        Collection $tags, Collection $files, ?MainPostDTO $mainPost)
+        Collection $tags, Collection $files, ?MainPostDTO $mainPost, bool $isLiked)
     {
         $this->id = $id;
         $this->user = $user;
@@ -59,6 +61,7 @@ class PostDTO
         $this->tags = $tags;
         $this->files = $files;
         $this->mainPost = $mainPost;
+        $this->isLiked = $isLiked;
     }
 
 
@@ -125,6 +128,11 @@ class PostDTO
     public function getMainPost(): ?MainPostDTO
     {
         return $this->mainPost;
+    }
+
+    public function isLiked(): bool
+    {
+        return $this->isLiked;
     }
 
 }

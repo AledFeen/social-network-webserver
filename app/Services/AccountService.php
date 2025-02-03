@@ -73,7 +73,7 @@ class AccountService implements MustHaveLocation
             $account->user_id,
             $account->user->name,
             $account->image,
-            $account->birthday,
+            $account->date_of_birth,
             $account->about_me,
             $account->real_name,
             $account->location,

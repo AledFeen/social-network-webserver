@@ -40,8 +40,11 @@ class BlacklistControllerTest extends TestCase
             ['id' => $user_second->id, 'name' => $user_second->name,'image' => $account_second->image]
         ];
 
-        $response = $this->actingAs($user)->get('/api/blocked-users');
+        $response = $this->actingAs($user)->get('/api/blocked-users?page_id=1');
         $response->assertStatus(200)
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 2])
             ->assertJsonFragment($expectedData[0])
             ->assertJsonFragment($expectedData[1]);
     }

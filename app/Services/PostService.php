@@ -6,6 +6,7 @@ use App\Models\Comment;
 use App\Models\dto\MainPostDTO;
 use App\Models\dto\PostDTO;
 use App\Models\dto\UserDTO;
+use App\Models\Location;
 use App\Models\Post;
 use App\Models\PostFile;
 use App\Models\PostLike;
@@ -27,7 +28,7 @@ class PostService implements MustHaveLocation
     use hasLocation;
     use checkingBlacklist;
 
-    public function getPost(array $request): ?PostDTO
+    public function getPost(array $request): ?PostDTO ////!!!!
     {
         $blockedByIds = $this->blockedBy();
 
@@ -39,6 +40,7 @@ class PostService implements MustHaveLocation
             ->with('user.account')
             ->with('files')
             ->with('tags')
+            ->with('likes')
             ->first();
 
         if (!$post) {
@@ -48,6 +50,8 @@ class PostService implements MustHaveLocation
         if ($post->repost_id !== null) {
             $post->main_post = $this->getMainPost($post->repost_id);
         }
+
+        $post->is_liked = $post->likes ? $post->likes->contains('user_id', auth()->id()) : false;
 
         return new PostDTO(
             $post->id,
@@ -62,7 +66,8 @@ class PostService implements MustHaveLocation
             $post->comments_count,
             $post->tags,
             $post->files,
-            $post->main_post
+            $post->main_post,
+            $post->is_liked
         );
     }
 
@@ -83,12 +88,15 @@ class PostService implements MustHaveLocation
             ->with('user.account')
             ->with('files')
             ->with('tags')
+            ->with('likes')
             ->orderBy('created_at', 'desc')
             ->paginate(15, ['*'], 'page', $request['page_id']);
 
         $postsWithMainPost = $this->getPostsWithMainPosts($paginatedPosts);
 
-        $data = $this->getPostDTOs($postsWithMainPost);
+        $postsWithLikedProperty = $this->getPostsWithIsLikedProperty($postsWithMainPost);
+
+        $data = $this->getPostDTOs($postsWithLikedProperty);
 
         return new PaginatedResponse(
             $data,
@@ -122,13 +130,16 @@ class PostService implements MustHaveLocation
             ->with('user.account')
             ->with('files')
             ->with('tags')
+            ->with('likes')
             ->orderBy('likes_count', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(15, ['*'], 'page', $request['page_id']);
 
         $postsWithMainPost = $this->getPostsWithMainPosts($paginatedPosts);
 
-        $data = $this->getPostDTOs($postsWithMainPost);
+        $postsWithLikedProperty = $this->getPostsWithIsLikedProperty($postsWithMainPost);
+
+        $data = $this->getPostDTOs($postsWithLikedProperty);
 
         return new PaginatedResponse(
             $data,
@@ -153,12 +164,15 @@ class PostService implements MustHaveLocation
             ->with('user.account')
             ->with('files')
             ->with('tags')
+            ->with('likes')
             ->orderBy('created_at', 'desc')
             ->paginate(15, ['*'], 'page', $request['page_id']);
 
         $postsWithMainPost = $this->getPostsWithMainPosts($paginatedPosts);
 
-        $data = $this->getPostDTOs($postsWithMainPost);
+        $postsWithLikedProperty = $this->getPostsWithIsLikedProperty($postsWithMainPost);
+
+        $data = $this->getPostDTOs($postsWithLikedProperty);
 
         return new PaginatedResponse(
             $data,
@@ -180,12 +194,16 @@ class PostService implements MustHaveLocation
             ->with('user.account')
             ->with('files')
             ->with('tags')
+            ->with('likes')
             ->orderBy('created_at', 'desc')
             ->paginate(15, ['*'], 'page', $request['page_id']);
 
+
         $postsWithMainPost = $this->getPostsWithMainPosts($paginatedPosts);
 
-        $data = $this->getPostDTOs($postsWithMainPost);
+        $postsWithLikedProperty = $this->getPostsWithIsLikedProperty($postsWithMainPost);
+
+        $data = $this->getPostDTOs($postsWithLikedProperty);
 
         return new PaginatedResponse(
             $data,
@@ -207,12 +225,15 @@ class PostService implements MustHaveLocation
             ->with('user.account')
             ->with('files')
             ->with('tags')
+            ->with('likes')
             ->orderBy('created_at', 'desc')
             ->paginate(15, ['*'], 'page', $request['page_id']);
 
         $postsWithMainPost = $this->getPostsWithMainPosts($paginatedPosts);
 
-        $data = $this->getPostDTOs($postsWithMainPost);
+        $postsWithLikedProperty = $this->getPostsWithIsLikedProperty($postsWithMainPost);
+
+        $data = $this->getPostDTOs($postsWithLikedProperty);
 
         return new PaginatedResponse(
             $data,
@@ -277,7 +298,6 @@ class PostService implements MustHaveLocation
                 logger($e);
                 return false;
             }
-
         }
         return false;
     }
@@ -350,7 +370,15 @@ class PostService implements MustHaveLocation
 
     public function create(array $request): bool
     {
+        if (!array_key_exists('files', $request)) {
+            $request['files'] = null;
+        }
         $files = $request['files'];
+
+        if (!array_key_exists('tags', $request)) {
+            $request['tags'] = null;
+        }
+
         if ($request['text'] || $files) {
             DB::beginTransaction();
             $images = [];
@@ -392,6 +420,20 @@ class PostService implements MustHaveLocation
         } else return false;
     }
 
+    public function getSearchTags(array $request)
+    {
+        return Tag::where('name', 'like', '%' . $request['search-text'] . '%')
+            ->withCount('posts')
+            ->take(10)
+            ->get();
+    }
+
+    public function getLocations(array $request)
+    {
+        return Location::where('name', 'like', '%' . $request['search-text'] . '%')
+            ->take(10)
+            ->get();
+    }
 
     protected function getPostsWithMainPosts($paginatedPosts)
     {
@@ -399,6 +441,16 @@ class PostService implements MustHaveLocation
             if ($post->repost_id !== null) {
                 $post->main_post = $this->getMainPost($post->repost_id);
             }
+            return $post;
+        });
+    }
+
+    protected function getPostsWithIsLikedProperty($paginatedPosts)
+    {
+        $authUserId = auth()->id();
+
+        return $paginatedPosts->map(function ($post) use ($authUserId) {
+            $post->is_liked = $post->likes ? $post->likes->contains('user_id', $authUserId) : false;
             return $post;
         });
     }
@@ -439,7 +491,8 @@ class PostService implements MustHaveLocation
                 $post->comments_count,
                 $post->tags,
                 $post->files,
-                $post->main_post
+                $post->main_post,
+                $post->is_liked
             );
         });
     }

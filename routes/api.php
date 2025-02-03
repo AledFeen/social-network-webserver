@@ -50,6 +50,7 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::get('/comment-replies',  [\App\Http\Controllers\PostController::class, 'getCommentReplies']);
 
     Route::get('/post-image/{filename}', [\App\Http\Controllers\FileController::class, 'getPostImage']);
+    Route::get('/post-video/{filename}', [\App\Http\Controllers\FileController::class, 'getPostVideo']);
     Route::get('/feed-posts', [\App\Http\Controllers\PostController::class, 'getFeedPosts']);
 
     //need checking account types
@@ -68,17 +69,22 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
 
     Route::post('subscribe-request', [\App\Http\Controllers\SubscriptionRequestController::class, 'subscribe']);
     Route::post('accept-request', [\App\Http\Controllers\SubscriptionRequestController::class, 'acceptRequest']);
-    Route::post('decline-request', [\App\Http\Controllers\SubscriptionRequestController::class, 'declineRequest']);
+    Route::delete('decline-request', [\App\Http\Controllers\SubscriptionRequestController::class, 'declineRequest']);
     Route::get('subscription-requests', [\App\Http\Controllers\SubscriptionRequestController::class, 'getRequests']);
+    Route::get('subscription-requests-count', [\App\Http\Controllers\SubscriptionRequestController::class, 'getRequestCount']);
 
     Route::group(['middleware' => ['can_repost']], function () {
         Route::post('/post', [\App\Http\Controllers\PostController::class, 'createPost']);
     });
 
+
     Route::delete('/post', [\App\Http\Controllers\PostController::class, 'deletePost']);
     Route::put('/post', [\App\Http\Controllers\PostController::class, 'updatePostText']);
     Route::post('/post-files', [\App\Http\Controllers\PostController::class, 'updatePostFiles']);
     Route::put('/post-tags', [\App\Http\Controllers\PostController::class, 'updatePostTags']);
+
+    Route::get('/search-tags', [\App\Http\Controllers\PostController::class, 'getSearchTags']);
+    Route::get('/locations', [\App\Http\Controllers\PostController::class, 'getLocations']);
 
     Route::group(['middleware' => ['can_comment']], function () {
         Route::post('/comment', [\App\Http\Controllers\PostController::class, 'leaveComment']);

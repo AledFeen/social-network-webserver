@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\BlockedUser\BlockedUserRequest;
+use App\Http\Requests\BlockedUser\BlockedUsersGetRequest;
+use App\Http\Resources\UserDTO\PaginatedUserDTOResource;
 use App\Http\Resources\UserDTO\UserDTOResource;
 use App\Services\BlockingService;
 use Illuminate\Http\JsonResponse;
@@ -16,11 +18,15 @@ class BlacklistController extends Controller
         $this->service = $service;
     }
 
-    public function getBlockedUsers(): AnonymousResourceCollection
-    {
-        $blockedUsers = $this->service->getBlockedUsers();
 
-        return UserDTOResource::collection($blockedUsers);
+
+    public function getBlockedUsers(BlockedUsersGetRequest $request): PaginatedUserDTOResource
+    {
+        $request = $request->validated();
+
+        $blockedUsers = $this->service->getBlockedUsers($request);
+
+        return new PaginatedUserDTOResource($blockedUsers);
     }
 
     public function block(BlockedUserRequest $request): JsonResponse

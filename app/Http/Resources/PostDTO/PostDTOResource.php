@@ -30,7 +30,8 @@ class PostDTOResource extends JsonResource
             'comment_count' => $this->getCommentCount(),
             'tags' => TagResource::collection($this->getTags()),
             'files' => PostFileResource::collection($this->getFiles()),
-            'main_post' => new MainPostDTOResource($this->getMainPost())
+            'main_post' => new MainPostDTOResource($this->getMainPost()),
+            'is_liked' => $this->isLiked()
         ];
     }
 }

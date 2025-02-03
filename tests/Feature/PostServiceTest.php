@@ -654,7 +654,8 @@ class PostServiceTest extends TestCase
                         'filename' => $file->filename
                     ]
                 ],
-                'main_post' => null
+                'main_post' => null,
+                'is_liked' => false
             ],
             [
                 'id' => $repost->id,
@@ -688,7 +689,8 @@ class PostServiceTest extends TestCase
                             'filename' => $file->filename
                         ]
                     ]
-                ]
+                ],
+                'is_liked' => false
             ]
         ];
 
