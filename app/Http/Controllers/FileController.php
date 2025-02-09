@@ -45,4 +45,10 @@ class FileController extends Controller implements MustCheckPostFileAccess
         }
     }
 
+    public function getCommentImage($filename)
+    {
+        $path = storage_path('/app/private/images/comments/' . $filename);
+        return $this->getFile($path);
+    }
+
 }

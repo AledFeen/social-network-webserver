@@ -102,4 +102,34 @@ class NotificationRepostTest extends TestCase
             ->assertJsonFragment($expectedData[0])
             ->assertJsonFragment($expectedData[1]);
     }
+
+    public function test_notification_repost_delete(): void
+    {
+        $user = User::factory()->create();
+        $user_first = User::factory()->create();
+        $user_second = User::factory()->create();
+
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+            ]);
+
+        Post::factory()
+            ->create([
+                'user_id' => $user_first->id,
+                'repost_id' => $post->id
+            ]);
+
+        Post::factory()
+            ->create([
+                'user_id' => $user_second->id,
+                'repost_id' => $post->id
+            ]);
+
+        $response = $this->actingAs($user)->delete('/api/notification/reposts');
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+        $this->assertDatabaseEmpty('notification_reposts');
+    }
 }

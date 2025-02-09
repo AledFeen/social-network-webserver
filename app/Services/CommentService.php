@@ -51,7 +51,7 @@ class CommentService
             ->with('files')
             ->with('user.account')
             ->withCount('replies')
-            ->paginate(15, ['*'], 'page', $request['page_id']);
+            ->paginate(5, ['*'], 'page', $request['page_id']);
 
         $data = $this->getCommentsDTOs($paginatedComments);
 
@@ -86,6 +86,9 @@ class CommentService
     {
         if ($request['text']) {
             DB::beginTransaction();
+            if (!array_key_exists('files', $request)) {
+                $request['files'] = [];
+            }
             $files = $request['files'];
             $images = [];
             try {

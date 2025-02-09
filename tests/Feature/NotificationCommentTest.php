@@ -98,4 +98,32 @@ class NotificationCommentTest extends TestCase
             ->assertJsonFragment($expectedData[0])
             ->assertJsonFragment($expectedData[1]);
     }
+
+    public function test_notification_comment_delete(): void
+    {
+        $user = User::factory()->create();
+        $user_first = User::factory()->create();
+        $user_second = User::factory()->create();
+
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+            ]);
+
+        Comment::factory()->create([
+            'post_id' => $post->id,
+            'user_id' => $user_first->id
+        ]);
+
+        Comment::factory()->create([
+            'post_id' => $post->id,
+            'user_id' => $user_second->id
+        ]);
+
+        $response = $this->actingAs($user)->delete('/api/notification/comments');
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+        $this->assertDatabaseEmpty('notification_comments');
+    }
 }

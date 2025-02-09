@@ -97,4 +97,32 @@ class NotificationLikeTest extends TestCase
             ->assertJsonFragment($expectedData[0])
             ->assertJsonFragment($expectedData[1]);
     }
+
+    public function test_notification_like_delete(): void
+    {
+        $user = User::factory()->create();
+        $user_first = User::factory()->create();
+        $user_second = User::factory()->create();
+
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+            ]);
+
+        PostLike::create([
+            'user_id' => $user_first->id,
+            'post_id' => $post->id
+        ]);
+
+        PostLike::create([
+            'user_id' => $user_second->id,
+            'post_id' => $post->id
+        ]);
+
+        $response = $this->actingAs($user)->delete('/api/notification/likes');
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+        $this->assertDatabaseEmpty('notification_likes');
+    }
 }

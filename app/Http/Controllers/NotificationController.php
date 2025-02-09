@@ -48,4 +48,35 @@ class NotificationController extends Controller
         $data = $this->service->getReposts();
         return RepostNotificationDTOResource::collection($data);
     }
+
+    public function deleteFollowers(): \Illuminate\Http\JsonResponse
+    {
+        $result = $this->service->deleteFollowers();
+        return response()->json(['success' => $result], $result ? 200 : 400);
+    }
+
+    public function deleteLikes(): \Illuminate\Http\JsonResponse
+    {
+        $result = $this->service->deleteLikes();
+        return response()->json(['success' => $result], $result ? 200 : 400);
+    }
+
+    public function deleteComment(): \Illuminate\Http\JsonResponse
+    {
+        $result = $this->service->deleteComment();
+        return response()->json(['success' => $result], $result ? 200 : 400);
+    }
+
+    public function deleteReplies(): \Illuminate\Http\JsonResponse
+    {
+        $result = $this->service->deleteReplies();
+        return response()->json(['success' => $result], $result ? 200 : 400);
+    }
+
+    public function deleteReposts(): \Illuminate\Http\JsonResponse
+    {
+        $result = $this->service->deleteReposts();
+        return response()->json(['success' => $result], $result ? 200 : 400);
+    }
+
 }

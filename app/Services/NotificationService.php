@@ -12,6 +12,7 @@ use App\Models\NotificationCommentReply;
 use App\Models\NotificationFollow;
 use App\Models\NotificationLike;
 use App\Models\NotificationRepost;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationService
@@ -114,6 +115,31 @@ class NotificationService
         return $this->getRepostNotificationDTOs($notifications);
     }
 
+    public function deleteFollowers(): bool
+    {
+        return (bool)NotificationFollow::where('user_id', Auth::id())->delete();
+    }
+
+    public function deleteLikes(): bool
+    {
+        return (bool)NotificationLike::where('user_id', Auth::id())->delete();
+    }
+
+    public function deleteComment(): bool
+    {
+        return (bool)NotificationComment::where('user_id', Auth::id())->delete();
+    }
+
+    public function deleteReplies(): bool
+    {
+        return (bool)NotificationCommentReply::where('user_id', Auth::id())->delete();
+    }
+
+    public function deleteReposts(): bool
+    {
+        return (bool)NotificationRepost::where('user_id', Auth::id())->delete();
+    }
+
     protected function getRepostNotificationDTOs($notifications)
     {
         return $notifications->map(function ($notification) {
@@ -126,7 +152,7 @@ class NotificationService
                 ),
                 $notification->post_id,
                 $notification->post->repost_id,
-                $notification->create_at
+                $notification->created_at
             );
         });
     }

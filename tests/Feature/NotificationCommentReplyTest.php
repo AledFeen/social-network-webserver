@@ -116,4 +116,39 @@ class NotificationCommentReplyTest extends TestCase
             ->assertJsonFragment($expectedData[0])
             ->assertJsonFragment($expectedData[1]);
     }
+
+    public function test_notification_comment_reply_delete(): void
+    {
+        $user = User::factory()->create();
+        $user_first = User::factory()->create();
+        $user_second = User::factory()->create();
+
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+            ]);
+
+        $mainComment = Comment::factory()->create([
+            'post_id' => $post->id,
+            'user_id' => $user->id
+        ]);
+
+        Comment::factory()->create([
+            'post_id' => $post->id,
+            'user_id' => $user_first->id,
+            'reply_id' => $mainComment->id
+        ]);
+
+        Comment::factory()->create([
+            'post_id' => $post->id,
+            'user_id' => $user_second->id,
+            'reply_id' => $mainComment->id
+        ]);
+
+        $response = $this->actingAs($user)->delete('/api/notification/comment-replies');
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+        $this->assertDatabaseEmpty('notification_comment_replies');
+    }
 }

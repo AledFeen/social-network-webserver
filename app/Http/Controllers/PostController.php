@@ -18,6 +18,7 @@ use App\Http\Requests\Post\GetSearchTagsRequest;
 use App\Http\Requests\Post\Like\GetLikesRequest;
 use App\Http\Requests\Post\Like\LikeRequest;
 use App\Http\Requests\Post\UpdateFilesRequest;
+use App\Http\Requests\Post\UpdateLocationRequest;
 use App\Http\Requests\Post\UpdateTagsRequest;
 use App\Http\Requests\Post\UpdateTextRequest;
 use App\Http\Resources\CommentDTO\PaginatedCommentDTOResource;
@@ -134,6 +135,15 @@ class PostController extends Controller
         $request = $request->validated();
 
         $result = $this->postService->updateText($request);
+
+        return response()->json(['success' => $result], $result ? 200 : 400);
+    }
+
+    public function updatePostLocation(UpdateLocationRequest $request): JsonResponse
+    {
+        $request = $request->validated();
+
+        $result = $this->postService->updateLocation($request);
 
         return response()->json(['success' => $result], $result ? 200 : 400);
     }

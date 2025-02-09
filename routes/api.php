@@ -51,9 +51,11 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
 
     Route::get('/post-image/{filename}', [\App\Http\Controllers\FileController::class, 'getPostImage']);
     Route::get('/post-video/{filename}', [\App\Http\Controllers\FileController::class, 'getPostVideo']);
+    Route::get('/comment-image/{filename}', [\App\Http\Controllers\FileController::class, 'getCommentImage']);
+
     Route::get('/feed-posts', [\App\Http\Controllers\PostController::class, 'getFeedPosts']);
 
-    //need checking account types
+    //only with public accounts
     Route::get('/posts-by-tag', [\App\Http\Controllers\PostController::class, 'getPostsByTag']);
     Route::get('/recommended-posts', [\App\Http\Controllers\PostController::class, 'getRecommendedPosts']);
 
@@ -77,9 +79,9 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
         Route::post('/post', [\App\Http\Controllers\PostController::class, 'createPost']);
     });
 
-
     Route::delete('/post', [\App\Http\Controllers\PostController::class, 'deletePost']);
     Route::put('/post', [\App\Http\Controllers\PostController::class, 'updatePostText']);
+    Route::put('/post-location', [\App\Http\Controllers\PostController::class, 'updatePostLocation']);
     Route::post('/post-files', [\App\Http\Controllers\PostController::class, 'updatePostFiles']);
     Route::put('/post-tags', [\App\Http\Controllers\PostController::class, 'updatePostTags']);
 
@@ -89,9 +91,9 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::group(['middleware' => ['can_comment']], function () {
         Route::post('/comment', [\App\Http\Controllers\PostController::class, 'leaveComment']);
     });
-
     Route::put('/comment', [\App\Http\Controllers\PostController::class, 'updateComment']);
     Route::delete('/comment', [\App\Http\Controllers\PostController::class, 'deleteComment']);
+
     Route::post('/like', [\App\Http\Controllers\PostController::class, 'likePost']);
 
     Route::get('/notification/followers', [\App\Http\Controllers\NotificationController::class, 'getFollowers']);
@@ -99,6 +101,12 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::get('/notification/comments', [\App\Http\Controllers\NotificationController::class, 'getComments']);
     Route::get('/notification/comment-replies', [\App\Http\Controllers\NotificationController::class, 'getCommentReplies']);
     Route::get('/notification/reposts', [\App\Http\Controllers\NotificationController::class, 'getReposts']);
+
+    Route::delete('/notification/followers', [\App\Http\Controllers\NotificationController::class, 'deleteFollowers']);
+    Route::delete('/notification/likes', [\App\Http\Controllers\NotificationController::class, 'deleteLikes']);
+    Route::delete('/notification/comments', [\App\Http\Controllers\NotificationController::class, 'deleteComment']);
+    Route::delete('/notification/comment-replies', [\App\Http\Controllers\NotificationController::class, 'deleteReplies']);
+    Route::delete('/notification/reposts', [\App\Http\Controllers\NotificationController::class, 'deleteReposts']);
 
     Route::group(['middleware' => ['can_message']], function () {
         Route::post('/personal-chat', [\App\Http\Controllers\ChatController::class, 'createPersonalChat']);

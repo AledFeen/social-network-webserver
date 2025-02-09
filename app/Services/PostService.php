@@ -111,7 +111,9 @@ class PostService implements MustHaveLocation
         $likedTags = PreferredTag::where('user_id', Auth::id())->pluck('tag');
         $followedUserIds = Subscription::where('follower_id', Auth::id())->pluck('user_id');
         $likedPosts = PostLike::whereIn('user_id', $followedUserIds)->pluck('post_id');
+
         $blockedByIds = $this->blockedBy();
+        $blockedByIds[] = Auth::id();
 
         $paginatedPosts = Post::where(function ($query) use ($likedTags, $likedPosts, $blockedByIds) {
             $query->whereHas('tags', function ($query) use ($likedTags) {
@@ -300,6 +302,20 @@ class PostService implements MustHaveLocation
             }
         }
         return false;
+    }
+
+    public function updateLocation(array $request)
+    {
+        $post = Post::where('id', $request['post_id'])->first();
+        if ($post->user_id == Auth::id()) {
+
+            $updated = $post->update([
+                'location' => $request['location'] ? $this->checkLocation($request['location']) : null
+            ]);
+            return (bool)$updated;
+
+        } else return false;
+
     }
 
     public function updateText(array $request): bool

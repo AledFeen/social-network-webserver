@@ -64,4 +64,27 @@ class NotificationFollowTest extends TestCase
             ->assertJsonFragment($expectedData[0])
             ->assertJsonFragment($expectedData[1]);
     }
+
+    public function test_notification_follow_delete(): void
+    {
+        $user = User::factory()->create();
+        $user_first = User::factory()->create();
+        $user_second = User::factory()->create();
+
+        Subscription::factory()->create([
+            'user_id' => $user->id,
+            'follower_id' => $user_first->id
+        ]);
+
+        Subscription::factory()->create([
+            'user_id' => $user,
+            'follower_id' => $user_second->id
+        ]);
+
+        $response = $this->actingAs($user)->delete('/api/notification/followers');
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+        $this->assertDatabaseEmpty('notification_follows');
+    }
 }
