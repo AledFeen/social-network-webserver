@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Chat;
+namespace App\Http\Requests\Post;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SendMessageRequest extends FormRequest
+class GetSearchPostRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,10 +22,12 @@ class SendMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'chat_id' => 'required|integer',
-            'text' => 'nullable|string|max:1024',
-            'files' => 'nullable|array',
-            'files.*' => 'file|mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,mkv,mp3,wav,ogg,pdf,txt,xml,json,zip,rar|max:20240',
+            'user' => 'nullable|string|max:64',
+            'location' => 'nullable|string|max:64',
+            'text' => 'nullable|string|max:512',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string|max:32',
+            'page_id' => 'required|integer'
         ];
     }
 }

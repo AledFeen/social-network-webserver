@@ -51,4 +51,48 @@ class FileController extends Controller implements MustCheckPostFileAccess
         return $this->getFile($path);
     }
 
+
+    public function getMessageImage($filename)
+    {
+        if ($this->checkAccessMessageFile($filename)) {
+            $path = storage_path('/app/private/images/messages/' . $filename);
+            return $this->getFile($path);
+        } else {
+            return response()->json(['error' => 'No rights'], 403);
+        }
+
+    }
+
+    public function getMessageVideo($filename)
+    {
+        if ($this->checkAccessMessageFile($filename)) {
+            $path = storage_path('/app/private/videos/messages/' . $filename);
+            return $this->getFile($path);
+        } else {
+            return response()->json(['error' => 'No rights'], 403);
+        }
+
+    }
+
+    public function getMessageAudio($filename)
+    {
+        if ($this->checkAccessMessageFile($filename)) {
+            $path = storage_path('/app/private/audios/messages/' . $filename);
+            return $this->getFile($path);
+        } else {
+            return response()->json(['error' => 'No rights'], 403);
+        }
+
+    }
+
+    public function getMessageFile($filename)
+    {
+        if ($this->checkAccessMessageFile($filename)) {
+            $path = storage_path('/app/private/files/messages/' . $filename);
+            return $this->getFile($path);
+        } else {
+            return response()->json(['error' => 'No rights'], 403);
+        }
+
+    }
 }

@@ -58,6 +58,7 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     //only with public accounts
     Route::get('/posts-by-tag', [\App\Http\Controllers\PostController::class, 'getPostsByTag']);
     Route::get('/recommended-posts', [\App\Http\Controllers\PostController::class, 'getRecommendedPosts']);
+    Route::get('/search-posts', [\App\Http\Controllers\PostController::class, 'getSearchPosts']);
 
     Route::delete('ignore', [\App\Http\Controllers\PreferredTagController::class, 'ignore']);
 
@@ -119,6 +120,12 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::post('/message', [\App\Http\Controllers\ChatController::class, 'sendMessage']);
     Route::put('/message', [\App\Http\Controllers\ChatController::class, 'updateMessageText']);
     Route::delete('/message', [\App\Http\Controllers\ChatController::class, 'deleteMessage']);
+    Route::put('/messages-read', [\App\Http\Controllers\ChatController::class, 'updateReadProperty']);
+
+    Route::get('/message-image/{filename}', [\App\Http\Controllers\FileController::class, 'getMessageImage']);
+    Route::get('/message-video/{filename}', [\App\Http\Controllers\FileController::class, 'getMessageVideo']);
+    Route::get('/message-audio/{filename}', [\App\Http\Controllers\FileController::class, 'getMessageAudio']);
+    Route::get('/message-file/{filename}', [\App\Http\Controllers\FileController::class, 'getMessageFile']);
 
     Route::get('/complaint', [\App\Http\Controllers\ComplaintController::class, 'getComplaint']);
     Route::get('/complaints', [\App\Http\Controllers\ComplaintController::class, 'getComplaints']);

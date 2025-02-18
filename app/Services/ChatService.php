@@ -11,12 +11,23 @@ use App\Models\Message;
 use App\Models\MessageFile;
 use App\Models\UserChatLink;
 use App\Services\Paginate\PaginatedResponse;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ChatService
 {
+    public function  updateReadProperties(array $request)
+    {
+        $chatId = $request['chat_id'];
+        return (bool)Message::whereHas('link', function ($query) use ($chatId) {
+            $query->where('chat_id', $chatId)
+                ->where('user_id', '!=', Auth::id());
+        })
+            ->update(['is_read' => true]);
+    }
+
     public function getChatUsers(array $request)
     {
         $links = UserChatLink::where('chat_id', $request['chat_id'])->pluck('user_id');
@@ -76,7 +87,9 @@ class ChatService
             ->with('userChatLinks')
             ->get();
 
-        return $this->getPersonalChatsDTOs($chats);
+        $chatsDto = $this->getPersonalChatsDTOs($chats);
+
+        return $chatsDto->sortByDesc(fn($chat) => $chat->getLastMessage() ? Carbon::parse($chat->getLastMessage()->getCreatedAt())->timestamp : 0)->values();
     }
 
     protected function getPersonalChatsDTOs($chats)
@@ -197,7 +210,7 @@ class ChatService
 
     public function sendMessage(array $request): bool
     {
-        if ($request['files']) {
+        if (array_key_exists('files', $request)) {
             $files = $request['files'];
         } else $files = [];
 

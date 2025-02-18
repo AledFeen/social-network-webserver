@@ -24,6 +24,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
+use function MongoDB\BSON\toJSON;
 
 class PostServiceTest extends TestCase
 {
@@ -702,6 +703,65 @@ class PostServiceTest extends TestCase
             ->assertJsonFragment(['total' => 2])
             ->assertJsonFragment($expectedData[1])
             ->assertJsonFragment($expectedData[0]);
+    }
+
+    public function test_get_search_posts() {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $tag1 = Tag::factory()->create();
+        $tag2 = Tag::factory()->create();
+        $location = Location::factory()->create();
+
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user1->id,
+                'location' => $location->name,
+                'text' => 'test text'
+            ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post->id,
+            'tag' => $tag1->name
+        ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post->id,
+            'tag' => $tag2->name
+        ]);
+
+        //second post
+        Post::factory()
+            ->create([
+                'user_id' => $user2->id
+            ]);
+
+        $expectedData = [['id' => $post->id,]];
+
+        $response = $this->actingAs($user)->get("/api/search-posts?user={$user1->name}&page_id=1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['total' => 1])
+            ->assertJsonFragment($expectedData[0]);
+
+        $response = $this->actingAs($user)->get("/api/search-posts?location={$location->name}&page_id=1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['total' => 1])
+            ->assertJsonFragment($expectedData[0]);
+
+        $response = $this->actingAs($user)->get("/api/search-posts?text=test text&page_id=1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['total' => 1])
+            ->assertJsonFragment($expectedData[0]);
+
+        $response = $this->actingAs($user)->get("/api/search-posts?tags[]={$tag1->name}&tags[]={$tag2->name}&page_id=1");
+
+        $response->assertStatus(200)
+            ->assertJsonFragment(['total' => 1])
+            ->assertJsonFragment($expectedData[0]);
+
     }
 
     public function test_get_reposts(): void

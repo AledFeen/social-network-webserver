@@ -4,7 +4,7 @@ namespace App\Http\Requests\Chat;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SendMessageRequest extends FormRequest
+class UpdateReadPropertyRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,10 +22,7 @@ class SendMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'chat_id' => 'required|integer',
-            'text' => 'nullable|string|max:1024',
-            'files' => 'nullable|array',
-            'files.*' => 'file|mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,mkv,mp3,wav,ogg,pdf,txt,xml,json,zip,rar|max:20240',
+            'chat_id' => 'required|integer'
         ];
     }
 }

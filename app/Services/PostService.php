@@ -28,7 +28,7 @@ class PostService implements MustHaveLocation
     use hasLocation;
     use checkingBlacklist;
 
-    public function getPost(array $request): ?PostDTO ////!!!!
+    public function getPost(array $request): ?PostDTO
     {
         $blockedByIds = $this->blockedBy();
 
@@ -215,6 +215,57 @@ class PostService implements MustHaveLocation
         );
     }
 
+    public function getSearchPost(array $request): PaginatedResponse
+    {
+        $posts = Post::query();
+
+        if (array_key_exists('text', $request)) {
+            $posts = $posts->where('text', 'like', '%' . $request['text'] . '%');
+        }
+
+        if (array_key_exists('tags', $request)) {
+            $posts = $posts->whereHas('tags', function ($query) use ($request) {
+                $query->whereIn('name', $request['tags']);
+            });
+        }
+
+        if (array_key_exists('location', $request)) {
+            $posts = $posts->where('location', 'like', '%' . $request['location'] . '%');
+        }
+
+        if (array_key_exists('user', $request)) {
+            $posts = $posts->whereHas('user', function ($query) use ($request) {
+                $query->where('name', 'like', '%' . $request['user'] . '%');
+            });
+        }
+
+        $blockedByIds = $this->blockedBy();
+
+        $paginatedPosts = $posts->whereNotIn('user_id', $blockedByIds)
+            ->withCount('reposts')
+            ->withCount('likes')
+            ->withCount('comments')
+            ->with('user.account')
+            ->with('files')
+            ->with('tags')
+            ->with('likes')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15, ['*'], 'page', $request['page_id']);
+
+        $postsWithMainPost = $this->getPostsWithMainPosts($paginatedPosts);
+
+        $postsWithLikedProperty = $this->getPostsWithIsLikedProperty($postsWithMainPost);
+
+        $data = $this->getPostDTOs($postsWithLikedProperty);
+
+        return new PaginatedResponse(
+            $data,
+            $paginatedPosts->currentPage(),
+            $paginatedPosts->lastPage(),
+            $paginatedPosts->total()
+        );
+    }
+
     public function getReposts(array $request): PaginatedResponse
     {
         $blockedByIds = $this->blockedBy();
@@ -350,7 +401,7 @@ class PostService implements MustHaveLocation
         $files = PostFile::where('post_id', $request['post_id'])->get();
         $post = Post::where('id', $request['post_id'])->first();
         if ($post->user_id == Auth::id()) {
-            if ($request['files']) {
+            if (array_key_exists('files', $request) && $request['files']) {
                 DB::beginTransaction();
                 $images = [];
                 $videos = [];

@@ -17,6 +17,7 @@ use App\Http\Requests\Post\GetRepostsRequest;
 use App\Http\Requests\Post\GetSearchTagsRequest;
 use App\Http\Requests\Post\Like\GetLikesRequest;
 use App\Http\Requests\Post\Like\LikeRequest;
+use App\Http\Requests\Post\GetSearchPostRequest;
 use App\Http\Requests\Post\UpdateFilesRequest;
 use App\Http\Requests\Post\UpdateLocationRequest;
 use App\Http\Requests\Post\UpdateTagsRequest;
@@ -63,7 +64,7 @@ class PostController extends Controller
         return TagDtoResource::collection($result);
     }
 
-    public function getPost(GetPostRequest $request)
+    public function getPost(GetPostRequest $request): PostDTOResource|JsonResponse
     {
         $request = $request->validated();
 
@@ -108,6 +109,15 @@ class PostController extends Controller
         $request = $request->validated();
 
         $result = $this->postService->getUserPosts($request);
+
+        return new PaginatedPostDTOResource($result);
+    }
+
+    public function getSearchPosts(GetSearchPostRequest $request): PaginatedPostDTOResource
+    {
+        $request = $request->validated();
+
+        $result = $this->postService->getSearchPost($request);
 
         return new PaginatedPostDTOResource($result);
     }

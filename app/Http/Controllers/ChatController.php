@@ -9,6 +9,7 @@ use App\Http\Requests\Chat\GetChatUsersRequest;
 use App\Http\Requests\Chat\GetMessagesRequest;
 use App\Http\Requests\Chat\SendMessageRequest;
 use App\Http\Requests\Chat\UpdateMessageRequest;
+use App\Http\Requests\Chat\UpdateReadPropertyRequest;
 use App\Http\Resources\ChatUserDTOResource;
 use App\Http\Resources\Messages\MessageResource;
 use App\Http\Resources\Messages\PaginatedMessagesResource;
@@ -20,12 +21,13 @@ use Illuminate\Http\JsonResponse;
 class ChatController extends Controller
 {
     protected ChatService $service;
+
     public function __construct(ChatService $service)
     {
         $this->service = $service;
     }
 
-    public function getMessages(GetMessagesRequest $request)
+    public function getMessages(GetMessagesRequest $request): JsonResponse|PaginatedMessagesResource
     {
         $request = $request->validated();
 
@@ -65,7 +67,7 @@ class ChatController extends Controller
         return response()->json(['success' => $result], $result ? 200 : 400);
     }
 
-    public function getChatUsers(GetChatUsersRequest $request)
+    public function getChatUsers(GetChatUsersRequest $request): JsonResponse|\Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
         $request = $request->validated();
 
@@ -78,7 +80,7 @@ class ChatController extends Controller
         return ChatUserDTOResource::collection($result);
     }
 
-    public function getChats()
+    public function getChats(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
         $result = $this->service->getPersonalChats();
 
@@ -99,6 +101,15 @@ class ChatController extends Controller
         $request = $request->validated();
 
         $result = $this->service->deletePersonalChat($request);
+
+        return response()->json(['success' => $result], $result ? 200 : 400);
+    }
+
+    public function updateReadProperty(UpdateReadPropertyRequest $request): JsonResponse
+    {
+        $request = $request->validated();
+
+        $result = $this->service->updateReadProperties($request);
 
         return response()->json(['success' => $result], $result ? 200 : 400);
     }
