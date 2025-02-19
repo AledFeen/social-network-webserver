@@ -20,7 +20,8 @@ class PreferredTagFactory extends Factory
     {
         return [
             'tag' => PostTag::factory(),
-            'user_id' => User::factory()
+            'user_id' => User::factory(),
+            'count' => 1
         ];
     }
 }

@@ -60,7 +60,10 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::get('/recommended-posts', [\App\Http\Controllers\PostController::class, 'getRecommendedPosts']);
     Route::get('/search-posts', [\App\Http\Controllers\PostController::class, 'getSearchPosts']);
 
-    Route::delete('ignore', [\App\Http\Controllers\PreferredTagController::class, 'ignore']);
+    Route::get('/preferredTags', [\App\Http\Controllers\PreferredTagController::class, 'get']);
+    Route::post('/preferredTag', [\App\Http\Controllers\PreferredTagController::class, 'add']);
+    Route::delete('/preferredTag', [\App\Http\Controllers\PreferredTagController::class, 'delete']);
+    Route::delete('/ignoreTag', [\App\Http\Controllers\PreferredTagController::class, 'ignore']);
 
     Route::get('/blocked-users', [\App\Http\Controllers\BlacklistController::class, 'getBlockedUsers']);
     Route::post('/block-user', [\App\Http\Controllers\BlacklistController::class, 'block']);

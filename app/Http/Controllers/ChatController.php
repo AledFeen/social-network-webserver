@@ -114,5 +114,4 @@ class ChatController extends Controller
         return response()->json(['success' => $result], $result ? 200 : 400);
     }
 
-
 }
