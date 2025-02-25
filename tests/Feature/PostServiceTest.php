@@ -1019,6 +1019,60 @@ class PostServiceTest extends TestCase
         $this->assertDatabaseEmpty('post_likes');
     }
 
+    public function test_delete_post_by_admin(): void
+    {
+        $user = User::factory()->create();
+        $admin = User::factory()->create(['role' => 1]);
+        $tag1 = Tag::factory()->create();
+        $tag2 = Tag::factory()->create();
+        $location = Location::factory()->create();
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+                'location' => $location->name
+            ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post->id,
+            'tag' => $tag1->name
+        ]);
+
+        PostTag::factory()->create([
+            'post_id' => $post->id,
+            'tag' => $tag2->name
+        ]);
+
+        PostFile::factory()->create([
+            'post_id' => $post->id
+        ]);
+
+        PostLike::create([
+            'user_id' => $user->id,
+            'post_id' => $post->id
+        ]);
+
+        $comment = Comment::factory()->create([
+            'post_id' => $post->id,
+            'user_id' => $user->id
+        ]);
+
+        CommentFile::factory()->create([
+            'comment_id' => $comment->id
+        ]);
+
+        $response = $this->actingAs($admin)->delete('/api/post', ['post_id' => $post->id]);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        $this->assertDatabaseEmpty('posts');
+        $this->assertDatabaseEmpty('comments');
+        $this->assertDatabaseEmpty('comment_files');
+        $this->assertDatabaseEmpty('post_tags');
+        $this->assertDatabaseEmpty('post_files');
+        $this->assertDatabaseEmpty('post_likes');
+    }
+
     public function test_delete_post_invalid_user(): void
     {
         $user = User::factory()->create();

@@ -6,7 +6,7 @@ namespace App\Http\Resources;
 use App\Http\Resources\UserDTO\UserDTOResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ChatUserDTOResource extends JsonResource
+class ChatIdResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,8 +16,8 @@ class ChatUserDTOResource extends JsonResource
     public function toArray($request): array
     {
         return [
-            'id' => $this->getId(),
-            'user' => new UserDTOResource($this->getUser()),
+            'id' => $this->id,
+            'type' => $this->type,
         ];
     }
 }

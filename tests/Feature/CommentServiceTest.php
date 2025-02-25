@@ -406,6 +406,33 @@ class CommentServiceTest extends TestCase
             ->assertJson(['success' => true]);
     }
 
+    public function test_delete_comment_post_admin(): void
+    {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $admin = User::factory()->create(['role' => 1]);
+        $location = Location::factory()->create();
+        $post = Post::factory()
+            ->create([
+                'user_id' => $user->id,
+                'location' => $location->name
+            ]);
+
+        $comment = Comment::factory()->create([
+            'post_id' => $post->id,
+            'user_id' => $user1->id
+        ]);
+
+        CommentFile::factory()->create([
+            'comment_id' => $comment->id
+        ]);
+
+        $response = $this->actingAs($admin)->delete('/api/comment', ['comment_id' => $comment->id]);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+    }
+
     protected function deleteCommentFiles(\Illuminate\Database\Eloquent\Collection $images): void
     {
         foreach ($images as $image) {

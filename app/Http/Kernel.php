@@ -69,6 +69,7 @@ class Kernel extends HttpKernel
         'account_type_post' => CheckAccountTypeByPostId::class,
         'can_comment' => \App\Http\Middleware\CheckCanComment::class,
         'can_repost' => \App\Http\Middleware\CheckCanRepost::class,
-        'can_message' => \App\Http\Middleware\CheckCanMessage::class
+        'can_message' => \App\Http\Middleware\CheckCanMessage::class,
+        'check_ban' => \App\Http\Middleware\CheckBanned::class
     ];
 }

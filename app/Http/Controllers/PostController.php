@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Post\Comment\AddCommentRequest;
 use App\Http\Requests\Post\Comment\DeleteCommentRequest;
+use App\Http\Requests\Post\Comment\GetCommentForAdminRequest;
 use App\Http\Requests\Post\Comment\GetCommentRepliesRequest;
 use App\Http\Requests\Post\Comment\GetCommentRequest;
 use App\Http\Requests\Post\Comment\UpdateCommentRequest;
@@ -22,6 +23,7 @@ use App\Http\Requests\Post\UpdateFilesRequest;
 use App\Http\Requests\Post\UpdateLocationRequest;
 use App\Http\Requests\Post\UpdateTagsRequest;
 use App\Http\Requests\Post\UpdateTextRequest;
+use App\Http\Resources\CommentDTO\CommentDTOResource;
 use App\Http\Resources\CommentDTO\PaginatedCommentDTOResource;
 use App\Http\Resources\LocationResource;
 use App\Http\Resources\PostDTO\PaginatedPostDTOResource;
@@ -201,6 +203,19 @@ class PostController extends Controller
         $result = $this->commentService->getReplies($request);
 
         return new PaginatedCommentDTOResource($result);
+    }
+
+    public function getCommentForAdmin(GetCommentForAdminRequest $request): CommentDTOResource|JsonResponse
+    {
+        $request = $request->validated();
+
+        $result = $this->commentService->getCommentForAdmin($request);
+
+        if (!$result) {
+            return response()->json(['error' => 'No rights'], 405);
+        }
+
+        return new CommentDTOResource($result);
     }
 
     public function leaveComment(AddCommentRequest $request): JsonResponse

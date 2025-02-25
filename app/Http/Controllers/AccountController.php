@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Account\AccountForAdminRequest;
+use App\Http\Requests\Account\GetAccountForAdminRequest;
 use App\Http\Requests\Account\GetAccountRequest;
 use App\Http\Requests\Account\SearchProfileRequest;
 use App\Http\Requests\Account\UpdateAccountRequest;
@@ -61,6 +63,19 @@ class AccountController extends Controller
         return new ProfileResource($data);
     }
 
+    public function getProfileForAdmin(GetAccountForAdminRequest $request): JsonResponse|ProfileResource
+    {
+        $request = $request->validated();
+
+        $data = $this->service->getProfileForAdmin($request);
+
+        if (!$data) {
+            return response()->json(['error' => 'Post not found or you have not rights'], 404);
+        }
+
+        return new ProfileResource($data);
+    }
+
     public function updateAccount(UpdateAccountRequest $request): JsonResponse
     {
         $request = $request->validated();
@@ -82,6 +97,25 @@ class AccountController extends Controller
     public function deleteImage(): JsonResponse
     {
         $result = $this->service->deleteImage();
+
+        return response()->json(['success' => $result], $result ? 200 : 400);
+    }
+
+    public function updateAccountForAdmin(AccountForAdminRequest $request): JsonResponse
+    {
+        $request = $request->validated();
+
+        $result = $this->service->updateForAdmin($request);
+
+        return response()->json(['success' => $result], $result ? 200 : 400);
+    }
+
+    public function deleteImageForAdmin(AccountForAdminRequest $request): JsonResponse
+    {
+        $request = $request->validated();
+
+        $result = $this->service->deleteImageForAdmin($request);
+
         return response()->json(['success' => $result], $result ? 200 : 400);
     }
 

@@ -84,6 +84,39 @@ class AccountService implements MustHaveLocation
         );
     }
 
+    public function getProfileForAdmin($request): ?ProfileDTO
+    {
+        if(Auth::user()->role == 'admin') {
+            $account = Account::where('user_id', $request['user_id'])
+                ->with('user.privacy')
+                ->with(['user' => function ($query) {
+                    $query->withCount('following')
+                        ->withCount('followers');
+                }])
+                ->first();
+
+            if(!$account) {
+                return null;
+            }
+
+            return new ProfileDTO(
+                $account->user_id,
+                $account->user->name,
+                $account->image,
+                $account->date_of_birth,
+                $account->about_me,
+                $account->real_name,
+                $account->location,
+                $account->user->privacy->account_type,
+                $account->user->privacy->who_can_message,
+                $account->user->followers_count,
+                $account->user->following_count
+            );
+        } else return null;
+    }
+
+
+
     public function getMy()
     {
         return Account::where('user_id', Auth::id())->first();
@@ -134,6 +167,37 @@ class AccountService implements MustHaveLocation
             return false;
         }
         return false;
+    }
+
+    public function updateForAdmin($request): bool
+    {
+        $updated = Account::where('user_id', $request['user_id'])->update([
+            'real_name' => '',
+            'location' => '',
+            'date_of_birth' => '',
+            'about_me' => '',
+        ]);
+
+        return (bool)$updated;
+    }
+
+    public function deleteImageForAdmin($request): bool
+    {
+        if(Auth::user()->role == 'admin') {
+            $oldData = Account::where('user_id', $request['user_id'])->first();
+            if ($oldData && $oldData->image != 'default_avatar') {
+                $success = $this->deleteOldImage($oldData->image);
+                $imageName = 'default_avatar';
+                if ($success) {
+                    $updated = Account::where('user_id', $request['user_id'])->update([
+                        'image' => $imageName
+                    ]);
+                    return (bool)$updated;
+                }
+                return false;
+            }
+            return false;
+        } return false;
     }
 
     protected function setImage($imageName): bool

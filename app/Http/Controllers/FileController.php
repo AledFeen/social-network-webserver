@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\File\checkingPostFileAccess;
 use App\Services\File\MustCheckPostFileAccess;
+use Illuminate\Support\Facades\Auth;
 
 
 class FileController extends Controller implements MustCheckPostFileAccess
@@ -27,7 +28,7 @@ class FileController extends Controller implements MustCheckPostFileAccess
 
     public function getPostImage($filename)
     {
-        if ($this->checkAccessPostFile($filename)) {
+        if ($this->checkAccessPostFile($filename) || Auth::user()->role == 'admin') {
             $path = storage_path('/app/private/images/posts/' . $filename);
             return $this->getFile($path);
         } else {
@@ -37,7 +38,7 @@ class FileController extends Controller implements MustCheckPostFileAccess
 
     public function getPostVideo($filename)
     {
-        if ($this->checkAccessPostFile($filename)) {
+        if ($this->checkAccessPostFile($filename) || Auth::user()->role == 'admin') {
             $path = storage_path('/app/private/videos/posts/' . $filename);
             return $this->getFile($path);
         } else {
@@ -54,7 +55,7 @@ class FileController extends Controller implements MustCheckPostFileAccess
 
     public function getMessageImage($filename)
     {
-        if ($this->checkAccessMessageFile($filename)) {
+        if ($this->checkAccessMessageFile($filename) || Auth::user()->role == 'admin') {
             $path = storage_path('/app/private/images/messages/' . $filename);
             return $this->getFile($path);
         } else {
@@ -65,7 +66,7 @@ class FileController extends Controller implements MustCheckPostFileAccess
 
     public function getMessageVideo($filename)
     {
-        if ($this->checkAccessMessageFile($filename)) {
+        if ($this->checkAccessMessageFile($filename) || Auth::user()->role == 'admin') {
             $path = storage_path('/app/private/videos/messages/' . $filename);
             return $this->getFile($path);
         } else {
@@ -76,7 +77,7 @@ class FileController extends Controller implements MustCheckPostFileAccess
 
     public function getMessageAudio($filename)
     {
-        if ($this->checkAccessMessageFile($filename)) {
+        if ($this->checkAccessMessageFile($filename) || Auth::user()->role == 'admin') {
             $path = storage_path('/app/private/audios/messages/' . $filename);
             return $this->getFile($path);
         } else {
@@ -87,7 +88,7 @@ class FileController extends Controller implements MustCheckPostFileAccess
 
     public function getMessageFile($filename)
     {
-        if ($this->checkAccessMessageFile($filename)) {
+        if ($this->checkAccessMessageFile($filename) || Auth::user()->role == 'admin') {
             $path = storage_path('/app/private/files/messages/' . $filename);
             return $this->getFile($path);
         } else {

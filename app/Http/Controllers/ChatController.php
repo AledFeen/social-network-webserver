@@ -6,11 +6,13 @@ use App\Http\Requests\Chat\CreatePersonalChatRequest;
 use App\Http\Requests\Chat\DeleteMessageRequest;
 use App\Http\Requests\Chat\DeletePersonalChatRequest;
 use App\Http\Requests\Chat\GetChatUsersRequest;
+use App\Http\Requests\Chat\GetMessageForAdminRequest;
 use App\Http\Requests\Chat\GetMessagesRequest;
 use App\Http\Requests\Chat\SendMessageRequest;
 use App\Http\Requests\Chat\UpdateMessageRequest;
 use App\Http\Requests\Chat\UpdateReadPropertyRequest;
-use App\Http\Resources\ChatUserDTOResource;
+use App\Http\Resources\ChatIdResource;
+use App\Http\Resources\ChatUsersResource;
 use App\Http\Resources\Messages\MessageResource;
 use App\Http\Resources\Messages\PaginatedMessagesResource;
 use App\Http\Resources\PreviewChatDTO\PreviewChatDTOResource;
@@ -38,6 +40,19 @@ class ChatController extends Controller
         }
 
         return new PaginatedMessagesResource($result);
+    }
+
+    public function getMessageForAdmin(GetMessageForAdminRequest $request): JsonResponse|MessageResource
+    {
+        $request = $request->validated();
+
+        $result = $this->service->getMessageForAdmin($request);
+
+        if (!$result) {
+            return response()->json(['error' => 'No rights or nothing found'], 404);
+        }
+
+        return new MessageResource($result);
     }
 
     public function sendMessage(SendMessageRequest $request): JsonResponse
@@ -77,7 +92,7 @@ class ChatController extends Controller
             return response()->json(['error' => 'Not found'], 404);
         }
 
-        return ChatUserDTOResource::collection($result);
+        return ChatUsersResource::collection($result);
     }
 
     public function getChats(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
@@ -85,6 +100,19 @@ class ChatController extends Controller
         $result = $this->service->getPersonalChats();
 
         return PreviewChatDTOResource::collection($result);
+    }
+
+    public function getChatId(CreatePersonalChatRequest $request): ChatIdResource|JsonResponse
+    {
+        $request = $request->validated();
+
+        $result = $this->service->getChatId($request);
+
+        if (!$result) {
+            return response()->json(null);
+        }
+
+        return new ChatIdResource($result);
     }
 
     public function createPersonalChat(CreatePersonalChatRequest $request): JsonResponse

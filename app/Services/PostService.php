@@ -14,6 +14,7 @@ use App\Models\PostTag;
 use App\Models\PreferredTag;
 use App\Models\Subscription;
 use App\Models\Tag;
+use App\Models\User;
 use App\Services\Blacklist\checkingBlacklist;
 use App\Services\Location\hasLocation;
 use App\Services\Location\MustHaveLocation;
@@ -32,9 +33,15 @@ class PostService implements MustHaveLocation
     {
         $blockedByIds = $this->blockedBy();
 
-        $post = Post::where('id', $request['post_id'])
-            ->whereNotIn('user_id', $blockedByIds)
-            ->withCount('reposts')
+        $user = User::where('id', Auth::id())->first();
+
+        $post = Post::where('id', $request['post_id']);
+
+        if ($user->role != 'admin') {
+            $post = $post->whereNotIn('user_id', $blockedByIds);
+        }
+
+        $post = $post->withCount('reposts')
             ->withCount('likes')
             ->withCount('comments')
             ->with('user.account')
@@ -300,7 +307,7 @@ class PostService implements MustHaveLocation
     {
         $post = Post::where('id', $request['post_id'])->first();
 
-        if ($post->user_id == Auth::id()) {
+        if ($post && ($post->user_id == Auth::id() || Auth::user()->role == 'admin')) {
             $comments = Comment::where('post_id', $request['post_id'])
                 ->with('files')
                 ->get();

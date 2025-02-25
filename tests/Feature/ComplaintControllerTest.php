@@ -78,16 +78,19 @@ class ComplaintControllerTest extends TestCase
             ]
         ];
 
-        $response = $this->actingAs($user)->get("/api/complaints?type=post&date=2024-10-16&status=non-checked");
+        $response = $this->actingAs($user)->get("/api/complaints?type=post&date=2024-10-16&status=non-checked&page_id=1");
         $response->assertStatus(200)
             ->assertJsonFragment($expectedData[0])
-            ->assertJsonFragment($expectedData[1]);
+            ->assertJsonFragment($expectedData[1])
+            ->assertJsonFragment(['current_page' => 1])
+            ->assertJsonFragment(['last_page' => 1])
+            ->assertJsonFragment(['total' => 2]);
         //dump($response->getContent());
     }
 
     public function test_create_complaint(): void
     {
-        $user = User::factory()->create(['role' => 1]);
+        $user = User::factory()->create(['role' => 0]);
         $user1 = User::factory()->create();
 
         $post = Post::factory()->create([

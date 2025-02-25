@@ -9,6 +9,7 @@ use App\Models\dto\PreviewPersonalChatDTO;
 use App\Models\dto\UserDTO;
 use App\Models\Message;
 use App\Models\MessageFile;
+use App\Models\User;
 use App\Models\UserChatLink;
 use App\Services\Paginate\PaginatedResponse;
 use Illuminate\Support\Carbon;
@@ -18,14 +19,40 @@ use Illuminate\Support\Facades\Storage;
 
 class ChatService
 {
-    public function  updateReadProperties(array $request)
+    public function getChatId(array $request) {
+        $userId = $request['user_id'];
+
+        return Chat::whereIn('id', function ($query) {
+            $query->select('chat_id')
+                ->from('user_chat_links')
+                ->where('user_id', Auth::id());
+        })->whereIn('id', function ($query) use ($userId) {
+            $query->select('chat_id')
+                ->from('user_chat_links')
+                ->where('user_id', $userId);
+        })->first();
+
+    }
+
+    public function updateReadProperties(array $request): bool
     {
         $chatId = $request['chat_id'];
-        return (bool)Message::whereHas('link', function ($query) use ($chatId) {
+
+        $messages = Message::whereHas('link', function ($query) use ($chatId) {
             $query->where('chat_id', $chatId)
                 ->where('user_id', '!=', Auth::id());
         })
-            ->update(['is_read' => true]);
+            ->get();
+
+        if(count($messages) > 0) {
+            return (bool)Message::whereHas('link', function ($query) use ($chatId) {
+                $query->where('chat_id', $chatId)
+                    ->where('user_id', '!=', Auth::id());
+            })
+                ->update(['is_read' => true]);
+        } else {
+            return true;
+        }
     }
 
     public function getChatUsers(array $request)
@@ -54,7 +81,7 @@ class ChatService
         });
     }
 
-    public function getMessages(array $request)
+    public function getMessages(array $request): ?PaginatedResponse
     {
         $links = UserChatLink::where('chat_id', $request['chat_id'])->pluck('user_id');
         if ($links->contains(Auth::id())) {
@@ -70,6 +97,13 @@ class ChatService
                 $messages->lastPage(),
                 $messages->total()
             );
+        } else return null;
+    }
+
+    public function getMessageForAdmin(array $request)
+    {
+        if(Auth::user()->role == 'admin') {
+            return Message::where('id', $request['message_id'])->first();
         } else return null;
     }
 
@@ -170,7 +204,7 @@ class ChatService
                 $message = Message::where('link_id', $link->id)
                     ->orderBy('created_at', 'desc')
                     ->first();
-                if ($message->created_at > $latestMessage->created_at) {
+                if ($message && $message->created_at > $latestMessage->created_at) {
                     $latestMessage = $message;
                 }
             }
@@ -283,19 +317,18 @@ class ChatService
     public function deleteMessage(array $request): bool
     {
         $message = Message::where('id', $request['message_id'])->first();
+        if($message) {
+            $link = UserChatLink::where('id', $message->link_id)->first();
 
-        $link = UserChatLink::where('id', $message->link_id)->first();
+            if ($link->user_id == Auth::id() || Auth::user()->role == 'admin') {
+                $messageFiles = MessageFile::where('message_id', $request['message_id'])->get();
 
-        if ($link->user_id == Auth::id()) {
-            $messageFiles = MessageFile::where('message_id', $request['message_id'])->get();
-
-            $message = Message::where('id', $request['message_id'])->delete();
-
-            if ($message && $messageFiles) {
-                $this->deleteMessageFiles($messageFiles);
-            }
-
-            return (bool)$message;
+                $deleted = Message::where('id', $request['message_id'])->delete();
+                if ($deleted && $messageFiles) {
+                    $this->deleteMessageFiles($messageFiles);
+                }
+                return (bool)$deleted;
+            } else return false;
         } else return false;
     }
 

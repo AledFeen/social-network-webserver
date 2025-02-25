@@ -25,6 +25,8 @@ class CheckAccountType
         $account_type = $this->getSettings($user_id)->account_type;
         if ($account_type === 'public') {
             return $next($request);
+        } else if(Auth::user()->role == 'admin') {
+            return $next($request);
         } else {
             if ($this->checkOwner($user_id)) {
                 return $next($request);

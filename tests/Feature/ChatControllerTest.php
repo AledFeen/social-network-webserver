@@ -587,8 +587,41 @@ class ChatControllerTest extends TestCase
 
         $this->assertDatabaseEmpty('messages');
         $this->assertDatabaseEmpty('message_files');
-
     }
+
+    public function test_delete_message_by_admin() {
+        $user = User::factory()->create();
+        $user1 = User::factory()->create();
+        $admin = User::factory()->create([
+            'role' => 1
+        ]);
+
+        $chat = Chat::factory()->create([
+            'type' => 'personal'
+        ]);
+
+        $link = UserChatLink::factory()->create([
+            'chat_id' => $chat->id,
+            'user_id' => $user->id
+        ]);
+
+        UserChatLink::factory()->create([
+            'chat_id' => $chat->id,
+            'user_id' => $user1->id
+        ]);
+
+        $message = Message::factory()->create([
+            'link_id' => $link->id
+        ]);
+
+        $response = $this->actingAs($admin)->delete('/api/message', [
+            'message_id' => $message->id,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+    }
+
 
     public function test_delete_chat_with_files()
     {

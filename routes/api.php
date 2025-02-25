@@ -19,7 +19,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/user', [\App\Http\Controllers\Auth\AuthController::class, 'user']);
 });
 
-Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
+Route::group(['middleware' => ['auth:sanctum', 'verified', 'check_ban']], function () {
     Route::get('/privacy-settings', [\App\Http\Controllers\PrivacySettingsController::class, 'getSettings']);
     Route::put('/privacy-settings', [\App\Http\Controllers\PrivacySettingsController::class, 'updateSettings']);
 
@@ -31,6 +31,7 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::delete('/profile-image', [\App\Http\Controllers\AccountController::class, 'deleteImage']);
 
     Route::get('/profile', [\App\Http\Controllers\AccountController::class, 'getProfile']);
+
     Route::get('/search-profile', [\App\Http\Controllers\AccountController::class, 'getSearchProfiles']);
 
     Route::get('/check-relations', [\App\Http\Controllers\SubscriptionController::class, 'checkRelations']);
@@ -47,6 +48,7 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
         Route::get('/likes', [\App\Http\Controllers\PostController::class, 'getPostLikes']);
         Route::get('/reposts', [\App\Http\Controllers\PostController::class, 'getReposts']);
     });
+
     Route::get('/comment-replies',  [\App\Http\Controllers\PostController::class, 'getCommentReplies']);
 
     Route::get('/post-image/{filename}', [\App\Http\Controllers\FileController::class, 'getPostImage']);
@@ -118,6 +120,8 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
 
     Route::get('/chats', [\App\Http\Controllers\ChatController::class, 'getChats']);
     Route::get('/chat-users', [\App\Http\Controllers\ChatController::class, 'getChatUsers']);
+    Route::post('/chat', [\App\Http\Controllers\ChatController::class, 'createPersonalChat']);
+    Route::get('/chatId', [\App\Http\Controllers\ChatController::class, 'getChatId']);
     Route::delete('/chat', [\App\Http\Controllers\ChatController::class, 'deletePersonalChat']);
     Route::get('/messages', [\App\Http\Controllers\ChatController::class, 'getMessages']);
     Route::post('/message', [\App\Http\Controllers\ChatController::class, 'sendMessage']);
@@ -134,4 +138,11 @@ Route::group(['middleware' => ['auth:sanctum', 'verified']], function () {
     Route::get('/complaints', [\App\Http\Controllers\ComplaintController::class, 'getComplaints']);
     Route::post('/complaint', [\App\Http\Controllers\ComplaintController::class, 'createComplaint']);
     Route::put('/complaint', [\App\Http\Controllers\ComplaintController::class, 'updateComplaint']);
+    Route::get('/comment-admin', [\App\Http\Controllers\PostController::class, 'getCommentForAdmin']);
+    Route::get('/message-admin', [\App\Http\Controllers\ChatController::class, 'getMessageForAdmin']);
+    Route::get('/profile-admin', [\App\Http\Controllers\AccountController::class, 'getProfileForAdmin']);
+
+    Route::post('/ban', [\App\Http\Controllers\ComplaintController::class, 'banUser']);
+    Route::put('/account-admin', [\App\Http\Controllers\AccountController::class, 'updateAccountForAdmin']);
+    Route::delete('/profile-image-admin', [\App\Http\Controllers\AccountController::class, 'deleteImageForAdmin']);
 });

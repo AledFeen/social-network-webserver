@@ -18,6 +18,32 @@ class CommentService
 {
     use checkingBlacklist;
 
+    public function getCommentForAdmin(array $request): ?CommentDTO
+    {
+        if(Auth::user()->role == 'admin') {
+            $comment = Comment::where('id', $request['comment_id'])
+                ->with('files')
+                ->with('user.account')
+                ->withCount('replies')
+                ->first();
+
+            return new CommentDTO(
+                $comment->id,
+                $comment->post_id,
+                new UserDTO(
+                    $comment->user->id,
+                    $comment->user->name,
+                    $comment->user->account->image,
+                ),
+                $comment->text,
+                $comment->created_at,
+                $comment->updated_at,
+                $comment->replies_count,
+                $comment->files
+            );
+        } else return null;
+    }
+
     public function get(array $request): PaginatedResponse
     {
         $blockedByIds = $this->blockedBy();
@@ -39,7 +65,6 @@ class CommentService
             $paginatedComments->lastPage(),
             $paginatedComments->total()
         );
-
     }
 
     public function getReplies(array $request): PaginatedResponse
@@ -131,21 +156,23 @@ class CommentService
     public function delete(array $request): bool
     {
         $comment = Comment::where('id', $request['comment_id'])->first();
-        $post = Post::where('id', $comment->post_id)->first();
-        if($post->user_id == Auth::id() || $comment->user_id == Auth::id()) {
-            $files = CommentFile::where('comment_id', $request['comment_id'])->get();
-            if($comment->delete()) {
-                foreach ($files as $file) {
-                    $this->deleteImage($file->filename);
+        if($comment) {
+            $post = Post::where('id', $comment->post_id)->first();
+            if($post->user_id == Auth::id() || $comment->user_id == Auth::id() || Auth::user()->role == 'admin') {
+                $files = CommentFile::where('comment_id', $request['comment_id'])->get();
+                if($comment->delete()) {
+                    foreach ($files as $file) {
+                        $this->deleteImage($file->filename);
+                    }
+                    return true;
+                } else {
+                    return false;
                 }
-                return true;
-            } else {
+            }
+            else {
                 return false;
             }
-        }
-        else {
-            return false;
-        }
+        } else return false;
     }
 
     protected function addImage($file, int $commentId): string
